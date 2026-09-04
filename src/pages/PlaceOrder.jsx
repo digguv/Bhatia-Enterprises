@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LS, createOrder } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Search, ShoppingBag, CreditCard, ChevronRight, Plus, Trash2, ShoppingCart, Tag } from 'lucide-react';
 
 const PlaceOrder = () => {
@@ -33,6 +33,8 @@ const PlaceOrder = () => {
             setSelectedProductId(location.state.preselectedProductId);
         }
     }, [location.state]);
+
+    if (user?.role !== 'admin') return <Navigate to="/" />;
 
     // Select product handler
     const handleSelectProduct = (id) => {

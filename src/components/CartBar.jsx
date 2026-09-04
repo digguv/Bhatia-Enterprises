@@ -11,10 +11,10 @@ const CartBar = () => {
     if (!cartCount || location.pathname === '/cart') return null;
 
     return (
-        <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md animate-fade-in-up">
+        <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-md">
             <button
                 onClick={() => navigate('/cart')}
-                className="w-full flex items-center justify-between gap-4 px-5 py-4 bg-slate-900 text-white rounded-2xl shadow-2xl shadow-slate-900/40 hover:bg-red-600 transition-all"
+                className="w-full flex items-center justify-between gap-4 px-5 py-4 bg-slate-900 text-white rounded-2xl shadow-2xl shadow-slate-900/40 hover:bg-red-600 transition-all animate-fade-in-up"
             >
                 <div className="flex items-center gap-3">
                     <div className="relative">

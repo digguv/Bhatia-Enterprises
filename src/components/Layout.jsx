@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import CartBar from './CartBar';
-import { Menu, Bell, Search, ShoppingCart, ShoppingBag, ListOrdered, HelpCircle, LogOut, ChevronDown, User, Tag, CheckCircle, Inbox } from 'lucide-react';
+import { Menu, Bell, Search, ShoppingBag, ListOrdered, HelpCircle, LogOut, ChevronDown, User, Tag, CheckCircle, Inbox } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -82,8 +82,7 @@ const Layout = ({ children }) => {
     const profileMenuItems = [
         { icon: User, label: 'My Profile', path: '/profile' },
         { icon: ShoppingBag, label: 'Cart', path: '/cart', badge: cartCount },
-        { icon: ShoppingCart, label: 'Place Order', path: '/place-order' },
-        { icon: ListOrdered, label: user?.role === 'admin' ? 'All Orders' : 'My Orders', path: '/orders' },
+        { icon: ListOrdered, label: 'My Orders', path: '/orders' },
         { icon: HelpCircle, label: 'Complaints', path: '/complaints' },
     ];
 
