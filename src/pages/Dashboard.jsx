@@ -136,12 +136,12 @@ const Dashboard = () => {
                 <div className="flex items-end justify-between mb-6 relative z-10">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="w-6 h-1 bg-red-600 rounded-full" />
-                            <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-red-600">Inventory</h4>
+                            <span className="w-6 h-1 bg-indigo-600 rounded-full" />
+                            <h4 className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-600">Inventory</h4>
                         </div>
                         <h2 className="text-2xl font-black text-slate-900 tracking-tighter">Latest Innovations</h2>
                     </div>
-                    <Link to="/new-products" className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-red-600 transition-all uppercase tracking-widest">
+                    <Link to="/new-products" className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-widest">
                         Catalog <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                     </Link>
                 </div>
@@ -163,14 +163,14 @@ const Dashboard = () => {
                                 <span className="absolute top-4 right-4 bg-slate-900 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-xl">New Arrival</span>
                             </div>
                             <div className="p-6">
-                                <h4 className="font-black text-slate-800 mb-0.5 group-hover:text-red-600 transition-colors truncate text-base tracking-tight">{product.name}</h4>
+                                <h4 className="font-black text-slate-800 mb-0.5 group-hover:text-indigo-600 transition-colors truncate text-base tracking-tight">{product.name}</h4>
                                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-4">Stock Ready</p>
                                 <div className="flex items-center justify-between">
                                     <div className="flex flex-col">
                                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Valuation</span>
                                         <span className="font-black text-xl text-slate-900 tracking-tighter leading-none">₹{product.price.toLocaleString()}</span>
                                     </div>
-                                    <Link to="/place-order" state={{ preselectedProductId: product.product_id }}>
+                                    <Link to="/all-products">
                                         <button className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:bg-slate-900 hover:text-white transition-all duration-500 flex items-center justify-center shadow-inner group-hover:shadow-xl group-hover:shadow-slate-900/20">
                                             <ShoppingBag size={18} />
                                         </button>
@@ -186,7 +186,7 @@ const Dashboard = () => {
             <motion.div variants={itemVariants} className="glass-panel p-6 md:p-8">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-black text-slate-900 tracking-tighter">Recent Logistics</h2>
-                    <Link to="/orders" className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-red-600 transition-all">Audit Full History</Link>
+                    <Link to="/orders" className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-all">Audit Full History</Link>
                 </div>
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left">

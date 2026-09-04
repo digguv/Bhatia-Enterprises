@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import CartBar from './CartBar';
-import { Menu, Bell, Search, ShoppingBag, ListOrdered, HelpCircle, LogOut, ChevronDown, User, Tag, CheckCircle, Inbox } from 'lucide-react';
+import { Menu, Bell, Search, ShoppingBag, ListOrdered, HelpCircle, LogOut, ChevronDown, User, Tag, CheckCircle, Inbox, MessageSquare } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -21,6 +21,7 @@ const timeAgo = (iso) => {
 const notifIcon = (type) => {
     if (type === 'scheme') return Tag;
     if (type === 'complaint') return CheckCircle;
+    if (type === 'feedback') return MessageSquare;
     return Bell;
 };
 
@@ -84,46 +85,49 @@ const Layout = ({ children }) => {
         { icon: ShoppingBag, label: 'Cart', path: '/cart', badge: cartCount },
         { icon: ListOrdered, label: 'My Orders', path: '/orders' },
         { icon: HelpCircle, label: 'Complaints', path: '/complaints' },
+        { icon: MessageSquare, label: 'Feedback', path: '/feedback' },
     ];
 
     const getPageTitle = () => {
         switch (location.pathname) {
             case '/': return user?.role === 'admin' ? 'Dashboard' : 'All Products';
-            case '/place-order': return 'Place New Order';
             case '/orders': return 'Order History';
             case '/schemes': return 'Active Schemes';
             case '/complaints': return 'Support & Complaints';
             case '/new-products': return 'New Product Launches';
-            case '/not-tried': return 'Products Not Tried';
             case '/cart': return 'Your Cart';
             case '/profile': return 'My Profile';
+            case '/feedback': return 'Feedback';
             case '/admin/pending': return 'Admin Console';
+            case '/admin/feedback': return 'Customer Feedback';
             default: return 'Bhatia Enterprises';
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#F1F5F9] selection:bg-red-100 selection:text-red-900 industrial-gradient">
+        <div className="min-h-screen bg-[#F1F5F9] selection:bg-indigo-100 selection:text-indigo-900 industrial-gradient">
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <div className="min-h-screen flex flex-col transition-all duration-500 ease-in-out">
                 <header className="h-16 md:h-20 flex items-center justify-between px-4 md:px-8 bg-white/40 backdrop-blur-3xl border-b border-white/20 sticky top-0 z-30">
                     <div className="flex items-center gap-3 md:gap-4">
-                        <button
-                            onClick={() => setSidebarOpen(o => !o)}
-                            className="p-2.5 rounded-2xl bg-white/80 hover:bg-white text-slate-600 hover:text-red-600 transition-all shadow-sm border border-white"
-                            aria-label="Toggle menu"
-                        >
-                            <Menu size={22} />
-                        </button>
+                        {user?.role === 'admin' && (
+                            <button
+                                onClick={() => setSidebarOpen(o => !o)}
+                                className="p-2.5 rounded-2xl bg-white/80 hover:bg-white text-slate-600 hover:text-indigo-600 transition-all shadow-sm border border-white"
+                                aria-label="Toggle menu"
+                            >
+                                <Menu size={22} />
+                            </button>
+                        )}
                         <div className="flex flex-col">
                             <h2 className="text-xl md:text-2xl font-black bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent tracking-tight">{getPageTitle()}</h2>
-                            <p className="text-[10px] text-slate-400 font-bold hidden md:block uppercase tracking-wider">Enterprise Portal</p>
+                            <p className="text-[10px] text-slate-400 font-bold hidden md:block uppercase tracking-wider">Bhatia Enterprises</p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4 md:gap-6">
-                        <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-white/50 rounded-2xl border border-white/60 focus-within:bg-white/80 focus-within:border-red-200 focus-within:ring-4 focus-within:ring-red-500/5 transition-all w-64 shadow-inner">
+                        <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-white/50 rounded-2xl border border-white/60 focus-within:bg-white/80 focus-within:border-indigo-200 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all w-64 shadow-inner">
                             <Search size={16} className="text-slate-400" />
                             <input
                                 type="text"
@@ -136,12 +140,12 @@ const Layout = ({ children }) => {
                             <div className="relative" ref={notifRef}>
                                 <button
                                     onClick={() => setNotifOpen(o => !o)}
-                                    className="relative p-2.5 rounded-2xl bg-white/60 hover:bg-white text-slate-500 hover:text-red-600 transition-all border border-white hover:shadow-xl hover:shadow-red-500/10"
+                                    className="relative p-2.5 rounded-2xl bg-white/60 hover:bg-white text-slate-500 hover:text-indigo-600 transition-all border border-white hover:shadow-xl hover:shadow-indigo-500/10"
                                     aria-label="Notifications"
                                 >
                                     <Bell size={20} />
                                     {unreadCount > 0 && (
-                                        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
+                                        <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-blue-500 rounded-full ring-2 ring-white animate-pulse"></span>
                                     )}
                                 </button>
 
@@ -152,7 +156,7 @@ const Layout = ({ children }) => {
                                             {unreadCount > 0 && (
                                                 <button
                                                     onClick={() => markAllNotificationsRead(user.id)}
-                                                    className="text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-widest transition-all"
+                                                    className="text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest transition-all"
                                                 >
                                                     Mark all read
                                                 </button>
@@ -171,9 +175,9 @@ const Layout = ({ children }) => {
                                                         <button
                                                             key={notif.id}
                                                             onClick={() => handleNotificationClick(notif)}
-                                                            className={`w-full flex items-start gap-3 px-4 py-3 text-left border-b border-slate-50 last:border-b-0 transition-all hover:bg-slate-50 ${notif.read ? '' : 'bg-red-50/40'}`}
+                                                            className={`w-full flex items-start gap-3 px-4 py-3 text-left border-b border-slate-50 last:border-b-0 transition-all hover:bg-slate-50 ${notif.read ? '' : 'bg-indigo-50/40'}`}
                                                         >
-                                                            <div className={`p-2 rounded-xl shrink-0 ${notif.read ? 'bg-slate-100 text-slate-400' : 'bg-red-100 text-red-600'}`}>
+                                                            <div className={`p-2 rounded-xl shrink-0 ${notif.read ? 'bg-slate-100 text-slate-400' : 'bg-indigo-100 text-indigo-600'}`}>
                                                                 <Icon size={14} />
                                                             </div>
                                                             <div className="flex-1 min-w-0">
@@ -181,7 +185,7 @@ const Layout = ({ children }) => {
                                                                 <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{notif.message}</p>
                                                                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">{timeAgo(notif.createdAt)}</p>
                                                             </div>
-                                                            {!notif.read && <span className="w-2 h-2 rounded-full bg-red-500 mt-1.5 shrink-0" />}
+                                                            {!notif.read && <span className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />}
                                                         </button>
                                                     );
                                                 })
@@ -226,12 +230,12 @@ const Layout = ({ children }) => {
                                                     key={item.path}
                                                     to={item.path}
                                                     onClick={() => setProfileOpen(false)}
-                                                    className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-red-600 transition-all"
+                                                    className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-all"
                                                 >
                                                     <item.icon size={16} />
                                                     {item.label}
                                                     {!!item.badge && (
-                                                        <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[9px] font-black flex items-center justify-center">
+                                                        <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[9px] font-black flex items-center justify-center">
                                                             {item.badge}
                                                         </span>
                                                     )}
@@ -241,7 +245,7 @@ const Layout = ({ children }) => {
                                         <div className="py-2 border-t border-slate-100">
                                             <button
                                                 onClick={handleLogout}
-                                                className="flex items-center gap-3 px-4 py-2.5 w-full text-xs font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all"
+                                                className="flex items-center gap-3 px-4 py-2.5 w-full text-xs font-bold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-all"
                                             >
                                                 <LogOut size={16} />
                                                 Sign Out
@@ -267,7 +271,7 @@ const Layout = ({ children }) => {
                             href="https://www.botivate.in" 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="bg-gradient-to-br from-red-600 to-rose-600 bg-clip-text text-transparent hover:from-slate-900 hover:to-slate-700 transition-all font-black"
+                            className="bg-gradient-to-br from-indigo-600 to-blue-600 bg-clip-text text-transparent hover:from-slate-900 hover:to-slate-700 transition-all font-black"
                         >
                             Botivate
                         </a>

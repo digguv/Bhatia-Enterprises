@@ -7,7 +7,7 @@ const SLIDES = [
         tag: 'New Arrivals',
         title: 'Premium Writing Instruments',
         subtitle: 'Pens, notebooks & everyday essentials for your workspace.',
-        gradient: 'from-slate-900 via-slate-800 to-red-900',
+        gradient: 'from-slate-900 via-slate-800 to-indigo-900',
     },
     {
         icon: Palette,

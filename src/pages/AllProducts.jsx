@@ -140,7 +140,7 @@ const AllProducts = () => {
                 {user?.role === 'admin' && (
                     <button
                         onClick={() => handleOpenModal(product)}
-                        className="absolute top-2 right-2 p-2.5 bg-white/90 backdrop-blur-xl rounded-xl text-slate-400 hover:text-red-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
+                        className="absolute top-2 right-2 p-2.5 bg-white/90 backdrop-blur-xl rounded-xl text-slate-400 hover:text-indigo-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
                     >
                         <Edit3 size={14} />
                     </button>
@@ -161,7 +161,7 @@ const AllProducts = () => {
                         </div>
                         <button
                             onClick={() => handleAddToCart(product)}
-                            className={`w-9 h-9 rounded-xl shadow-sm transition-all flex items-center justify-center active:scale-90 ${addedId === product.product_id ? 'bg-emerald-600 text-white' : 'bg-red-50 text-red-600 hover:bg-red-600 hover:text-white'}`}
+                            className={`w-9 h-9 rounded-xl shadow-sm transition-all flex items-center justify-center active:scale-90 ${addedId === product.product_id ? 'bg-emerald-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white'}`}
                             title="Add to Cart"
                         >
                             {addedId === product.product_id ? <Check size={16} /> : <ShoppingCart size={16} />}
@@ -181,7 +181,7 @@ const AllProducts = () => {
                     <div className="flex justify-end">
                         <button
                             onClick={() => handleOpenModal()}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-2xl shadow-xl hover:bg-red-600 transition-all font-black text-[10px] uppercase tracking-widest"
+                            className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-2xl shadow-xl hover:bg-indigo-600 transition-all font-black text-[10px] uppercase tracking-widest"
                         >
                             <Plus size={16} /> Register Product
                         </button>
@@ -192,7 +192,7 @@ const AllProducts = () => {
                     <div className="space-y-4">
                         <button
                             onClick={() => { setActiveCategory(null); window.scrollTo({ top: 0 }); }}
-                            className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-red-600 uppercase tracking-widest transition-all"
+                            className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all"
                         >
                             <ArrowLeft size={14} /> All Categories
                         </button>
@@ -212,7 +212,7 @@ const AllProducts = () => {
                                 <button
                                     key={cat}
                                     onClick={() => openCategory(cat)}
-                                    className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100 hover:border-red-200 hover:shadow-lg hover:-translate-y-1 transition-all"
+                                    className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-lg hover:-translate-y-1 transition-all"
                                 >
                                     <div className="w-full aspect-square rounded-2xl bg-sky-50 ring-1 ring-slate-100 overflow-hidden">
                                         <img
@@ -322,7 +322,7 @@ const AllProducts = () => {
                                 ></textarea>
                             </div>
 
-                            <button type="submit" className="w-full py-5 bg-slate-900 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-red-600 transition-all uppercase tracking-widest text-xs mt-4">
+                            <button type="submit" className="w-full py-5 bg-slate-900 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all uppercase tracking-widest text-xs mt-4">
                                 <Save size={20} /> {editingProduct ? 'Update Product' : 'Add Product'}
                             </button>
                         </form>

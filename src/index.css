@@ -24,11 +24,11 @@
   }
 
   .glass-input {
-    @apply bg-white/50 border border-slate-200 rounded-xl py-2.5 px-4 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all placeholder:text-slate-400 text-sm;
+    @apply bg-white/50 border border-slate-200 rounded-xl py-2.5 px-4 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 text-sm;
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-red-600 to-rose-600 text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-red-500/20 hover:shadow-red-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all;
+    @apply bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all;
   }
 
   .btn-secondary {
@@ -65,6 +65,6 @@
 }
 
 .industrial-gradient {
-  background: radial-gradient(circle at top right, rgba(220, 38, 38, 0.05), transparent),
+  background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.05), transparent),
               radial-gradient(circle at bottom left, rgba(15, 23, 42, 0.03), transparent);
 }

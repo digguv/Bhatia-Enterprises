@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, ListOrdered, Tag, AlertCircle, Package2, LogOut, X, Star, ShieldCheck, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, ListOrdered, Tag, Package2, LogOut, X, Star, ShieldCheck, HelpCircle, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { getCustomerProfile } from '../utils/LSHelpers';
@@ -26,27 +26,19 @@ const Sidebar = ({ isOpen, onClose }) => {
         return () => window.removeEventListener('ri_data_changed', loadName);
     }, [user]);
 
-    const navItems = [];
+    // Customers never get a sidebar - it stays hidden with no way to unhide it.
+    if (user?.role !== 'admin') return null;
 
-    if (user?.role === 'admin') {
-        navItems.push(
-            { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-            { icon: ShieldCheck, label: 'Admin Pending', path: '/admin/pending' },
-            { icon: ListOrdered, label: 'All Orders', path: '/orders' },
-            { icon: ShoppingCart, label: 'Place Order', path: '/place-order' },
-            { icon: Package2, label: 'All Products', path: '/all-products' },
-            { icon: Tag, label: 'Schemes', path: '/schemes' },
-            { icon: HelpCircle, label: 'Complaints', path: '/complaints' },
-            { icon: Star, label: 'New Launches', path: '/new-products' },
-            { icon: Package2, label: 'Not Tried', path: '/not-tried' }
-        );
-    } else {
-        // Dashboard is hidden for customers; Place Order, My Orders & Complaints
-        // are reachable from the profile menu in the header instead.
-        navItems.push(
-            { icon: Package2, label: 'All Products', path: '/' }
-        );
-    }
+    const navItems = [
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+        { icon: ShieldCheck, label: 'Admin Pending', path: '/admin/pending' },
+        { icon: ListOrdered, label: 'All Orders', path: '/orders' },
+        { icon: Package2, label: 'All Products', path: '/all-products' },
+        { icon: Tag, label: 'Schemes', path: '/schemes' },
+        { icon: HelpCircle, label: 'Complaints', path: '/complaints' },
+        { icon: Star, label: 'New Launches', path: '/new-products' },
+        { icon: MessageSquare, label: 'Feedback', path: '/admin/feedback' }
+    ];
 
     return (
         <>
@@ -59,7 +51,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 <div className="flex flex-col h-full bg-slate-50/20">
                     <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200/40 bg-white/20">
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-red-500/20">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
                                 <Package2 size={20} />
                             </div>
                             <div>
@@ -79,14 +71,14 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 to={item.path}
                                 onClick={onClose}
                                 className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${isActive
-                                    ? 'bg-white text-red-600 shadow-sm border-white ring-1 ring-slate-200/40'
+                                    ? 'bg-white text-indigo-600 shadow-sm border-white ring-1 ring-slate-200/40'
                                     : 'text-slate-500 hover:text-slate-900 hover:bg-white/50'
                                     }`}
                             >
                                 {({ isActive }) => (
                                     <>
-                                        {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-red-600 rounded-r-full" />}
-                                        <item.icon size={18} className={`transition-all duration-300 ${isActive ? 'text-red-600 scale-110 drop-shadow-[0_0_8px_rgba(220,38,38,0.2)]' : 'text-slate-400 group-hover:text-slate-900 group-hover:scale-110'}`} />
+                                        {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-indigo-600 rounded-r-full" />}
+                                        <item.icon size={18} className={`transition-all duration-300 ${isActive ? 'text-indigo-600 scale-110 drop-shadow-[0_0_8px_rgba(220,38,38,0.2)]' : 'text-slate-400 group-hover:text-slate-900 group-hover:scale-110'}`} />
                                         <span className={`text-xs font-bold tracking-tight transition-all duration-300 ${isActive ? 'translate-x-0.5' : 'group-hover:translate-x-0.5'}`}>{item.label}</span>
                                     </>
                                 )}
@@ -106,7 +98,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                         </div>
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all duration-300 group border border-transparent hover:border-rose-100"
+                            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 group border border-transparent hover:border-blue-100"
                         >
                             <LogOut size={18} className="group-hover:-translate-x-0.5 transition-transform" />
                             <span className="text-xs font-bold tracking-tight">Sign Out</span>

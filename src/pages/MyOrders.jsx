@@ -49,7 +49,7 @@ const MyOrders = () => {
             case 'APPROVED': return <CheckCircle size={16} className="text-cyan-500" />;
             case 'DISPATCHED': return <Truck size={16} className="text-blue-500" />;
             case 'DELIVERED': return <Package size={16} className="text-emerald-500" />;
-            case 'REJECTED': return <XCircle size={16} className="text-red-500" />;
+            case 'REJECTED': return <XCircle size={16} className="text-indigo-500" />;
             case 'CANCELLED': return <XCircle size={16} className="text-slate-500" />;
             default: return <Clock size={16} />;
         }
@@ -61,7 +61,7 @@ const MyOrders = () => {
             case 'APPROVED': return 'bg-cyan-50 text-cyan-600 border-cyan-200';
             case 'DISPATCHED': return 'bg-blue-50 text-blue-600 border-blue-200';
             case 'DELIVERED': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-            case 'REJECTED': return 'bg-red-50 text-red-600 border-red-200';
+            case 'REJECTED': return 'bg-indigo-50 text-indigo-600 border-indigo-200';
             case 'CANCELLED': return 'bg-slate-100 text-slate-500 border-slate-200';
             default: return 'bg-slate-50 text-slate-600 border-slate-200';
         }
@@ -69,6 +69,29 @@ const MyOrders = () => {
 
     const getProduct = (id) => products.find(p => p.product_id === id);
     const getCategory = (id) => getProduct(id)?.category || 'Other';
+
+    const getFulfillment = (order) => {
+        const totalQty = order.quantity;
+        if (order.status === 'CANCELLED' || order.status === 'REJECTED') {
+            return { totalQty, receivedQty: 0, pendingQty: 0, label: order.status === 'CANCELLED' ? 'Cancelled' : 'Rejected' };
+        }
+        let receivedQty = 0;
+        if (order.status === 'DISPATCHED' || order.status === 'DELIVERED') {
+            const dispatchEntry = order.history?.find(h => h.status === 'DISPATCHED');
+            receivedQty = dispatchEntry?.dispatchedQty ?? totalQty;
+        }
+        const pendingQty = totalQty - receivedQty;
+        return { totalQty, receivedQty, pendingQty, label: pendingQty > 0 ? 'Pending' : 'Completed' };
+    };
+
+    const fulfillmentColor = (label) => {
+        switch (label) {
+            case 'Completed': return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+            case 'Cancelled': return 'bg-slate-100 text-slate-500 border-slate-200';
+            case 'Rejected': return 'bg-indigo-50 text-indigo-600 border-indigo-200';
+            default: return 'bg-amber-50 text-amber-600 border-amber-200';
+        }
+    };
 
     // ---------------------------------------------------------------
     // Admin view: unchanged flat list of every order across customers
@@ -93,7 +116,7 @@ const MyOrders = () => {
                                     onClick={() => toggleExpand(order.order_id)}
                                 >
                                     <div className="flex items-start gap-4">
-                                        <div className="p-3 bg-red-50 rounded-lg text-red-600 hidden sm:block">
+                                        <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600 hidden sm:block">
                                             <Package size={24} />
                                         </div>
                                         <div>
@@ -125,7 +148,7 @@ const MyOrders = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div>
                                                 <div className="flex items-center gap-2 mb-4">
-                                                    <Clock size={16} className="text-red-500" />
+                                                    <Clock size={16} className="text-indigo-500" />
                                                     <h4 className="font-semibold text-slate-800 text-sm">Order Timeline</h4>
                                                 </div>
                                                 <div className="relative pl-3 border-l-2 border-slate-100 ml-2 space-y-6">
@@ -139,7 +162,7 @@ const MyOrders = () => {
                                                                 <span className="text-xs text-slate-500">{new Date(h.at).toLocaleString()}</span>
                                                                 {h.vehicleNo && <span className="text-xs text-slate-600 mt-1 bg-slate-100 px-2 py-1 rounded w-fit">Vehicle: {h.vehicleNo}</span>}
                                                                 {h.proof && <span className="text-xs text-blue-600 mt-1 underline cursor-pointer">View Proof</span>}
-                                                                {h.reason && <span className="text-xs text-red-500 mt-1 italic">Reason: {h.reason}</span>}
+                                                                {h.reason && <span className="text-xs text-indigo-500 mt-1 italic">Reason: {h.reason}</span>}
                                                                 {h.by && <span className="text-[10px] text-slate-400">By: {h.by}</span>}
                                                             </div>
                                                         </div>
@@ -159,7 +182,7 @@ const MyOrders = () => {
                                                 {order.status === 'PENDING' && (
                                                     <button
                                                         onClick={(e) => handleCancel(e, order.order_id)}
-                                                        className="w-full py-3 bg-white border border-red-200 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors shadow-sm text-sm flex items-center justify-center gap-2"
+                                                        className="w-full py-3 bg-white border border-indigo-200 text-indigo-600 font-medium rounded-xl hover:bg-indigo-50 transition-colors shadow-sm text-sm flex items-center justify-center gap-2"
                                                     >
                                                         <XCircle size={16} /> Cancel Order
                                                     </button>
@@ -220,7 +243,7 @@ const MyOrders = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <div className="flex items-center gap-2 mb-3">
-                        <Clock size={16} className="text-red-500" />
+                        <Clock size={16} className="text-indigo-500" />
                         <h4 className="font-semibold text-slate-800 text-sm">Order Timeline</h4>
                     </div>
                     <div className="relative pl-3 border-l-2 border-slate-100 ml-2 space-y-4">
@@ -232,7 +255,7 @@ const MyOrders = () => {
                                 <div className="flex flex-col">
                                     <span className="text-sm font-bold text-slate-700">{h.status}</span>
                                     <span className="text-xs text-slate-500">{new Date(h.at).toLocaleString()}</span>
-                                    {h.reason && <span className="text-xs text-red-500 mt-1 italic">Reason: {h.reason}</span>}
+                                    {h.reason && <span className="text-xs text-indigo-500 mt-1 italic">Reason: {h.reason}</span>}
                                 </div>
                             </div>
                         ))}
@@ -247,7 +270,7 @@ const MyOrders = () => {
                     {order.status === 'PENDING' && (
                         <button
                             onClick={(e) => handleCancel(e, order.order_id)}
-                            className="w-full py-2.5 bg-white border border-red-200 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors shadow-sm text-sm flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-white border border-indigo-200 text-indigo-600 font-medium rounded-xl hover:bg-indigo-50 transition-colors shadow-sm text-sm flex items-center justify-center gap-2"
                         >
                             <XCircle size={16} /> Cancel Order
                         </button>
@@ -283,7 +306,7 @@ const MyOrders = () => {
                         <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="glass-input text-sm" />
                     </div>
                     {(searchTerm || startDate || endDate) && (
-                        <button onClick={clearFilters} className="text-[10px] font-black text-red-600 uppercase tracking-widest hover:text-red-700 transition-all">
+                        <button onClick={clearFilters} className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-700 transition-all">
                             Clear
                         </button>
                     )}
@@ -300,7 +323,7 @@ const MyOrders = () => {
                 <div className="space-y-4">
                     <button
                         onClick={() => { setActiveCategory(null); setExpandedOrder(null); }}
-                        className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-red-600 uppercase tracking-widest transition-all"
+                        className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all"
                     >
                         <ArrowLeft size={14} /> All Categories
                     </button>
@@ -310,48 +333,55 @@ const MyOrders = () => {
                     </div>
 
                     <div className="glass-panel overflow-x-auto">
-                        <table className="w-full text-sm min-w-[640px]">
+                        <table className="w-full text-sm min-w-[820px]">
                             <thead>
                                 <tr className="text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                                     <th className="p-4">Order ID</th>
                                     <th className="p-4">Product</th>
-                                    <th className="p-4">Qty</th>
                                     <th className="p-4">Date</th>
+                                    <th className="p-4 text-right">Total Order Qty</th>
+                                    <th className="p-4 text-right">Total Received Qty</th>
+                                    <th className="p-4 text-right">Pending Qty</th>
                                     <th className="p-4">Status</th>
                                     <th className="p-4 text-right">Amount</th>
                                     <th className="p-4"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {activeGroup.orders.map(order => (
-                                    <React.Fragment key={order.order_id}>
-                                        <tr
-                                            onClick={() => toggleExpand(order.order_id)}
-                                            className="cursor-pointer hover:bg-slate-50/60 border-b border-slate-50 last:border-b-0"
-                                        >
-                                            <td className="p-4 font-bold text-slate-800 whitespace-nowrap">{order.order_id}</td>
-                                            <td className="p-4 text-slate-600">{getProduct(order.product_id)?.name || order.product_id}</td>
-                                            <td className="p-4 text-slate-600">{order.quantity}</td>
-                                            <td className="p-4 text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
-                                            <td className="p-4">
-                                                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full border ${getStatusColor(order.status)}`}>
-                                                    {order.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-right font-bold text-slate-900 whitespace-nowrap">₹{order.amount}</td>
-                                            <td className="p-4 text-right">
-                                                {expandedOrder === order.order_id ? <ChevronUp size={16} className="text-slate-400 inline" /> : <ChevronDown size={16} className="text-slate-400 inline" />}
-                                            </td>
-                                        </tr>
-                                        {expandedOrder === order.order_id && (
-                                            <tr>
-                                                <td colSpan={7} className="p-0">
-                                                    {renderOrderDetail(order)}
+                                {activeGroup.orders.map(order => {
+                                    const fulfillment = getFulfillment(order);
+                                    return (
+                                        <React.Fragment key={order.order_id}>
+                                            <tr
+                                                onClick={() => toggleExpand(order.order_id)}
+                                                className="cursor-pointer hover:bg-slate-50/60 border-b border-slate-50 last:border-b-0"
+                                            >
+                                                <td className="p-4 font-bold text-slate-800 whitespace-nowrap">{order.order_id}</td>
+                                                <td className="p-4 text-slate-600">{getProduct(order.product_id)?.name || order.product_id}</td>
+                                                <td className="p-4 text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
+                                                <td className="p-4 text-right text-slate-600">{fulfillment.totalQty}</td>
+                                                <td className="p-4 text-right text-slate-600">{fulfillment.receivedQty}</td>
+                                                <td className="p-4 text-right text-slate-600">{fulfillment.pendingQty}</td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full border ${fulfillmentColor(fulfillment.label)}`}>
+                                                        {fulfillment.label}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-right font-bold text-slate-900 whitespace-nowrap">₹{order.amount}</td>
+                                                <td className="p-4 text-right">
+                                                    {expandedOrder === order.order_id ? <ChevronUp size={16} className="text-slate-400 inline" /> : <ChevronDown size={16} className="text-slate-400 inline" />}
                                                 </td>
                                             </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))}
+                                            {expandedOrder === order.order_id && (
+                                                <tr>
+                                                    <td colSpan={9} className="p-0">
+                                                        {renderOrderDetail(order)}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

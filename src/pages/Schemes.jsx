@@ -100,7 +100,7 @@ const Schemes = () => {
                         {user?.role === 'admin' && (
                             <button
                                 onClick={() => setIsModalOpen(true)}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-br from-red-600 to-rose-600 text-white rounded-2xl shadow-xl shadow-red-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all font-black text-[10px] uppercase tracking-widest"
+                                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-br from-indigo-600 to-blue-600 text-white rounded-2xl shadow-xl shadow-indigo-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all font-black text-[10px] uppercase tracking-widest"
                             >
                                 <Plus size={16} /> Launch Scheme
                             </button>
@@ -125,7 +125,7 @@ const Schemes = () => {
                                         {user?.role === 'admin' && (
                                             <button
                                                 onClick={() => handleDeactivate(scheme.scheme_id)}
-                                                className="p-2.5 rounded-2xl bg-white/10 text-white/40 hover:bg-rose-500 hover:text-white transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0"
+                                                className="p-2.5 rounded-2xl bg-white/10 text-white/40 hover:bg-blue-500 hover:text-white transition-all backdrop-blur-md opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
@@ -152,12 +152,12 @@ const Schemes = () => {
                                         </div>
                                         <div className="bg-white/95 backdrop-blur-md text-slate-900 rounded-2xl p-4 flex items-center justify-between shadow-2xl shadow-black/10">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-red-600">
+                                                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-indigo-600">
                                                     <Tag size={16} />
                                                 </div>
                                                 <span className="font-black font-mono tracking-[0.2em] text-sm uppercase">{scheme.scheme_id}</span>
                                             </div>
-                                            <span className="text-[10px] font-black text-red-600 uppercase tracking-widest border border-red-100 px-2 py-1 rounded-lg">Copy Code</span>
+                                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest border border-indigo-100 px-2 py-1 rounded-lg">Copy Code</span>
                                         </div>
                                     </div>
                                 </div>
@@ -227,7 +227,7 @@ const Schemes = () => {
                                         selectedProductIds.map(pid => (
                                             <span key={pid} className="bg-slate-900 text-white px-3 py-1 rounded-xl text-[10px] font-black tracking-widest flex items-center gap-2 shadow-lg shadow-slate-900/10">
                                                 {pid}
-                                                <X size={14} className="cursor-pointer hover:text-red-400 transition-colors" onClick={(e) => { e.stopPropagation(); toggleProductSelection(pid); }} />
+                                                <X size={14} className="cursor-pointer hover:text-indigo-400 transition-colors" onClick={(e) => { e.stopPropagation(); toggleProductSelection(pid); }} />
                                             </span>
                                         ))
                                     )}
@@ -243,7 +243,7 @@ const Schemes = () => {
                                                 onClick={() => { toggleProductSelection(p.product_id); }}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${selectedProductIds.includes(p.product_id) ? 'bg-red-600 border-red-600 scale-110 shadow-lg shadow-red-500/20' : 'border-slate-200 bg-white'}`}>
+                                                    <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${selectedProductIds.includes(p.product_id) ? 'bg-indigo-600 border-indigo-600 scale-110 shadow-lg shadow-indigo-500/20' : 'border-slate-200 bg-white'}`}>
                                                         {selectedProductIds.includes(p.product_id) && <Check size={14} className="text-white" />}
                                                     </div>
                                                     <div>
@@ -258,7 +258,7 @@ const Schemes = () => {
                                 )}
                             </div>
 
-                            <button type="submit" className="w-full py-5 bg-slate-900 text-white font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] shadow-2xl hover:bg-red-600 active:scale-95 transition-all mt-4">
+                            <button type="submit" className="w-full py-5 bg-slate-900 text-white font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] shadow-2xl hover:bg-indigo-600 active:scale-95 transition-all mt-4">
                                 Deploy Scheme Live
                             </button>
                         </form>

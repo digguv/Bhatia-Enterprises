@@ -25,13 +25,13 @@ const Login = () => {
         <div className="min-h-screen flex items-center justify-center bg-[#F1F5F9] p-4 relative overflow-hidden industrial-gradient">
             {/* Background Decorative Elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-                <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-red-600/5 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-indigo-600/5 rounded-full blur-[120px] animate-pulse" />
                 <div className="absolute -bottom-[10%] -right-[10%] w-[50%] h-[50%] bg-slate-900/5 rounded-full blur-[100px]" />
             </div>
 
             <div className="w-full max-w-sm glass-panel p-6 md:p-8 relative z-10 animate-fade-in-up border-white/60 shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] my-6">
                 <div className="text-center mb-6">
-                    <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-rose-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-red-500/30 mx-auto mb-4 transform hover:rotate-12 transition-transform duration-500">
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-500/30 mx-auto mb-4 transform hover:rotate-12 transition-transform duration-500">
                         <Lock size={22} strokeWidth={2.5} />
                     </div>
                     <h1 className="text-xl font-black bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent mb-1 tracking-tighter uppercase">Bhatia Enterprises</h1>
@@ -42,12 +42,12 @@ const Login = () => {
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identity</label>
                         <div className="relative group">
-                            <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-500 transition-all" />
+                            <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-all" />
                             <input
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full bg-white/40 border-2 border-slate-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-4 focus:ring-red-500/5 focus:border-red-500 outline-none transition-all placeholder:text-slate-300 font-bold text-sm text-slate-700"
+                                className="w-full bg-white/40 border-2 border-slate-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 font-bold text-sm text-slate-700"
                                 placeholder="Username"
                             />
                         </div>
@@ -56,26 +56,26 @@ const Login = () => {
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Access Key</label>
                         <div className="relative group">
-                            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-red-500 transition-all" />
+                            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-all" />
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-white/40 border-2 border-slate-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-4 focus:ring-red-500/5 focus:border-red-500 outline-none transition-all placeholder:text-slate-300 font-bold text-sm text-slate-700"
+                                className="w-full bg-white/40 border-2 border-slate-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 font-bold text-sm text-slate-700"
                                 placeholder="••••••••"
                             />
                         </div>
                     </div>
 
                     {error && (
-                        <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold text-center animate-shake uppercase tracking-wider">
+                        <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 text-xs font-bold text-center animate-shake uppercase tracking-wider">
                             {error}
                         </div>
                     )}
 
                     <button
                         type="submit"
-                        className="w-full bg-slate-900 text-white font-black py-3.5 rounded-xl shadow-xl shadow-slate-900/20 hover:shadow-red-500/40 hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-2 group uppercase tracking-widest text-xs"
+                        className="w-full bg-slate-900 text-white font-black py-3.5 rounded-xl shadow-xl shadow-slate-900/20 hover:shadow-indigo-500/40 hover:bg-indigo-600 hover:scale-[1.02] active:scale-[0.98] transition-all duration-500 flex items-center justify-center gap-2 group uppercase tracking-widest text-xs"
                     >
                         <span>Authorize Access</span>
                         <ArrowRight size={16} className="group-hover:translate-x-1.5 transition-transform" />
@@ -86,13 +86,13 @@ const Login = () => {
                     <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] text-center">Internal Test Credentials</p>
                     <div className="flex justify-center gap-3">
                         <button
-                            className="px-4 py-1.5 bg-slate-50 hover:bg-red-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-400 hover:text-red-600 transition-all uppercase tracking-widest"
+                            className="px-4 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-widest"
                             onClick={() => { setUsername('admin'); setPassword('admin123'); }}
                         >
                             Node ADMIN
                         </button>
                         <button
-                            className="px-4 py-1.5 bg-slate-50 hover:bg-red-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-400 hover:text-red-600 transition-all uppercase tracking-widest"
+                            className="px-4 py-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-lg text-[9px] font-black text-slate-400 hover:text-indigo-600 transition-all uppercase tracking-widest"
                             onClick={() => { setUsername('user'); setPassword('user123'); }}
                         >
                             Node USER
@@ -108,7 +108,7 @@ const Login = () => {
                         href="https://www.botivate.in"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-gradient-to-br from-red-600 to-rose-600 bg-clip-text text-transparent hover:from-slate-900 hover:to-slate-700 transition-all font-black"
+                        className="bg-gradient-to-br from-indigo-600 to-blue-600 bg-clip-text text-transparent hover:from-slate-900 hover:to-slate-700 transition-all font-black"
                     >
                         Botivate
                     </a>

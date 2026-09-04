@@ -63,7 +63,7 @@ const Complaints = () => {
                 </div>
                 <button
                     onClick={() => setShowForm(!showForm)}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl shadow-lg shadow-red-500/30 hover:bg-red-700 transition-all font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition-all font-medium"
                 >
                     {showForm ? 'Cancel' : 'New Complaint'}
                 </button>
@@ -98,7 +98,7 @@ const Complaints = () => {
                             />
                         </div>
                         <div className="flex justify-end">
-                            <button type="submit" className="flex items-center gap-2 px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors shadow-md">
+                            <button type="submit" className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md">
                                 <Send size={18} />
                                 <span>Submit Ticket</span>
                             </button>
@@ -112,7 +112,7 @@ const Complaints = () => {
                     <p className="text-slate-500 text-center py-10">No complaints found.</p>
                 ) : (
                     complaints.map(complaint => (
-                        <div key={complaint.complaint_id} className="glass-card p-6 border-l-4 border-l-transparent hover:border-l-red-500 transition-all">
+                        <div key={complaint.complaint_id} className="glass-card p-6 border-l-4 border-l-transparent hover:border-l-indigo-500 transition-all">
                             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                                 <div className="flex gap-4">
                                     <div className={`p-3 rounded-full h-fit flex-shrink-0 ${complaint.status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>

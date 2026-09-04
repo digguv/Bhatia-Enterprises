@@ -85,7 +85,7 @@ const Profile = () => {
             {/* Contact Details */}
             <div className="glass-panel p-5 md:p-6 space-y-4">
                 <h2 className="flex items-center gap-2 text-sm font-black text-slate-800 uppercase tracking-wide">
-                    <User size={16} className="text-red-600" /> Contact Details
+                    <User size={16} className="text-indigo-600" /> Contact Details
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -107,7 +107,7 @@ const Profile = () => {
                 </div>
                 <button
                     onClick={handleSaveContact}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all"
                 >
                     <Save size={14} /> {savedFlash ? 'Saved!' : 'Save Details'}
                 </button>
@@ -117,11 +117,11 @@ const Profile = () => {
             <div className="glass-panel p-5 md:p-6 space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="flex items-center gap-2 text-sm font-black text-slate-800 uppercase tracking-wide">
-                        <MapPin size={16} className="text-red-600" /> Saved Addresses
+                        <MapPin size={16} className="text-indigo-600" /> Saved Addresses
                     </h2>
                     <button
                         onClick={openAddModal}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-red-50 text-red-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all"
                     >
                         <Plus size={14} /> Add Address
                     </button>
@@ -132,24 +132,24 @@ const Profile = () => {
                 ) : (
                     <div className="space-y-3">
                         {addresses.map((a, i) => (
-                            <div key={a.id} className={`p-4 rounded-2xl border ${a.id === defaultAddressId ? 'border-red-300 bg-red-50/40' : 'border-slate-100 bg-white/60'}`}>
+                            <div key={a.id} className={`p-4 rounded-2xl border ${a.id === defaultAddressId ? 'border-indigo-300 bg-indigo-50/40' : 'border-slate-100 bg-white/60'}`}>
                                 <div className="flex items-start justify-between gap-3">
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-xs font-black text-slate-800 uppercase tracking-wide">{a.label || `Address ${i + 1}`}</span>
                                             {a.id === defaultAddressId && (
-                                                <span className="flex items-center gap-1 text-[9px] font-black text-red-600 uppercase tracking-widest">
-                                                    <Star size={10} className="fill-red-600" /> Default
+                                                <span className="flex items-center gap-1 text-[9px] font-black text-indigo-600 uppercase tracking-widest">
+                                                    <Star size={10} className="fill-indigo-600" /> Default
                                                 </span>
                                             )}
                                         </div>
                                         <p className="text-xs text-slate-500 leading-relaxed">{formatAddress(a)}</p>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
-                                        <button onClick={() => openEditModal(a)} className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-white transition-all">
+                                        <button onClick={() => openEditModal(a)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-white transition-all">
                                             <Edit3 size={14} />
                                         </button>
-                                        <button onClick={() => handleDelete(a.id)} className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-white transition-all">
+                                        <button onClick={() => handleDelete(a.id)} className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-white transition-all">
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
@@ -157,7 +157,7 @@ const Profile = () => {
                                 {a.id !== defaultAddressId && (
                                     <button
                                         onClick={() => handleSetDefault(a.id)}
-                                        className="mt-2 text-[10px] font-black text-slate-400 hover:text-red-600 uppercase tracking-widest transition-all"
+                                        className="mt-2 text-[10px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all"
                                     >
                                         Set as Default
                                     </button>
@@ -217,7 +217,7 @@ const Profile = () => {
                                     <input className="glass-input w-full font-semibold text-slate-700" value={addressForm.country} onChange={e => setAddressForm({ ...addressForm, country: e.target.value })} />
                                 </div>
                             </div>
-                            <button type="submit" className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-red-600 transition-all uppercase tracking-widest text-xs mt-2">
+                            <button type="submit" className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all uppercase tracking-widest text-xs mt-2">
                                 <Save size={18} /> {editingAddressId ? 'Update Address' : 'Save Address'}
                             </button>
                         </form>

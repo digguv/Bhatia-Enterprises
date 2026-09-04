@@ -18,7 +18,7 @@ const inputClass = "glass-input w-full text-sm";
 const Field = ({ label, required, children }) => (
     <div>
         <label className="text-[11px] font-bold text-slate-500 block mb-1">
-            {label} {required && <span className="text-red-500">*</span>}
+            {label} {required && <span className="text-indigo-500">*</span>}
         </label>
         {children}
     </div>
@@ -126,7 +126,7 @@ const Cart = () => {
                 <p className="text-sm text-slate-400 mt-1 mb-6">Browse products and add items to get started.</p>
                 <button
                     onClick={() => navigate('/')}
-                    className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-600 transition-all"
+                    className="px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-600 transition-all"
                 >
                     Browse Products
                 </button>
@@ -139,7 +139,7 @@ const Cart = () => {
         <div className="space-y-6 animate-fade-in-up pb-24">
             <button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-red-600 uppercase tracking-widest transition-all"
+                className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all"
             >
                 <ArrowLeft size={14} /> Continue Shopping
             </button>
@@ -162,16 +162,16 @@ const Cart = () => {
                                     <p className="text-xs text-slate-400">&#8377;{item.price} / unit</p>
                                 </div>
                                 <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl px-2 py-1">
-                                    <button onClick={() => updateQty(item.product_id, item.qty - 1)} className="p-1.5 text-slate-500 hover:text-red-600">
+                                    <button onClick={() => updateQty(item.product_id, item.qty - 1)} className="p-1.5 text-slate-500 hover:text-indigo-600">
                                         <Minus size={14} />
                                     </button>
                                     <span className="w-6 text-center text-sm font-black text-slate-800">{item.qty}</span>
-                                    <button onClick={() => updateQty(item.product_id, item.qty + 1)} className="p-1.5 text-slate-500 hover:text-red-600">
+                                    <button onClick={() => updateQty(item.product_id, item.qty + 1)} className="p-1.5 text-slate-500 hover:text-indigo-600">
                                         <Plus size={14} />
                                     </button>
                                 </div>
                                 <span className="w-20 text-right font-black text-slate-900 text-sm">&#8377;{(item.price * item.qty).toLocaleString()}</span>
-                                <button onClick={() => removeFromCart(item.product_id)} className="text-slate-300 hover:text-red-600 p-2">
+                                <button onClick={() => removeFromCart(item.product_id)} className="text-slate-300 hover:text-indigo-600 p-2">
                                     <Trash2 size={16} />
                                 </button>
                             </div>
@@ -183,7 +183,7 @@ const Cart = () => {
                         {/* 1. Customer Details */}
                         <div className="space-y-3">
                             <h3 className="flex items-center gap-2 text-sm font-black text-slate-800 uppercase tracking-wide">
-                                <User size={16} className="text-red-600" /> 1. Customer Details
+                                <User size={16} className="text-indigo-600" /> 1. Customer Details
                             </h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Field label="Full Name" required>
@@ -204,7 +204,7 @@ const Cart = () => {
                         {/* 2. Delivery Address */}
                         <div className="space-y-3 pt-5 border-t border-dashed border-slate-200">
                             <h3 className="flex items-center gap-2 text-sm font-black text-slate-800 uppercase tracking-wide">
-                                <MapPin size={16} className="text-red-600" /> 2. Delivery Address
+                                <MapPin size={16} className="text-indigo-600" /> 2. Delivery Address
                             </h3>
 
                             {selectedAddress ? (
@@ -215,40 +215,40 @@ const Cart = () => {
                                     </div>
                                     <button
                                         onClick={openAddressModal}
-                                        className="shrink-0 text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-widest transition-all"
+                                        className="shrink-0 text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest transition-all"
                                     >
                                         Change
                                     </button>
                                 </div>
                             ) : (
-                                <div className={`p-4 rounded-2xl border ${touched ? 'border-rose-300 bg-rose-50/40' : 'border-dashed border-slate-200 bg-white/60'}`}>
+                                <div className={`p-4 rounded-2xl border ${touched ? 'border-blue-300 bg-blue-50/40' : 'border-dashed border-slate-200 bg-white/60'}`}>
                                     <p className="text-xs text-slate-500 mb-3">No delivery address selected yet.</p>
                                     <button
                                         onClick={openAddressModal}
-                                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all"
+                                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all"
                                     >
                                         <Plus size={14} /> Add Delivery Address
                                     </button>
                                 </div>
                             )}
                             {touched && !isAddressComplete && (
-                                <p className="text-[10px] text-red-500 font-bold">Please add and select a delivery address to continue.</p>
+                                <p className="text-[10px] text-indigo-500 font-bold">Please add and select a delivery address to continue.</p>
                             )}
                             <p className="text-[10px] text-slate-400">
-                                Manage all your saved addresses anytime from <Link to="/profile" className="text-red-600 font-bold hover:underline">My Profile</Link>.
+                                Manage all your saved addresses anytime from <Link to="/profile" className="text-indigo-600 font-bold hover:underline">My Profile</Link>.
                             </p>
                         </div>
 
                         {/* 3. Payment */}
                         <div className="space-y-3 pt-5 border-t border-dashed border-slate-200">
                             <h3 className="flex items-center gap-2 text-sm font-black text-slate-800 uppercase tracking-wide">
-                                <CreditCard size={16} className="text-red-600" /> 3. Payment
+                                <CreditCard size={16} className="text-indigo-600" /> 3. Payment
                             </h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                 {PAYMENT_METHODS.map(method => (
                                     <label
                                         key={method}
-                                        className={`cursor-pointer border rounded-lg p-2.5 text-center text-[11px] font-bold transition-all ${paymentType === method ? 'bg-red-50 border-red-500 text-red-700' : 'bg-white border-slate-200'}`}
+                                        className={`cursor-pointer border rounded-lg p-2.5 text-center text-[11px] font-bold transition-all ${paymentType === method ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'bg-white border-slate-200'}`}
                                     >
                                         <input type="radio" className="hidden" checked={paymentType === method} onChange={() => setPaymentType(method)} />
                                         {method}
@@ -272,7 +272,7 @@ const Cart = () => {
                     </div>
 
                     {touched && !isAddressComplete && (
-                        <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-bold">
+                        <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 text-[11px] font-bold">
                             <AlertCircle size={14} className="shrink-0 mt-0.5" />
                             Please add a delivery address before placing the order.
                         </div>
@@ -280,7 +280,7 @@ const Cart = () => {
 
                     <button
                         onClick={handlePlaceOrder}
-                        className="w-full py-3.5 bg-gradient-to-r from-red-600 to-rose-600 text-white font-black rounded-xl shadow-lg hover:shadow-red-500/50 transition-all uppercase text-xs tracking-widest"
+                        className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-black rounded-xl shadow-lg hover:shadow-indigo-500/50 transition-all uppercase text-xs tracking-widest"
                     >
                         Place Order
                     </button>
@@ -307,7 +307,7 @@ const Cart = () => {
                                     {addresses.map((a, i) => (
                                         <label
                                             key={a.id}
-                                            className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${pickedAddressId === a.id ? 'border-red-400 bg-red-50/50 ring-1 ring-red-200' : 'border-slate-100 hover:bg-slate-50'}`}
+                                            className={`flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${pickedAddressId === a.id ? 'border-indigo-400 bg-indigo-50/50 ring-1 ring-indigo-200' : 'border-slate-100 hover:bg-slate-50'}`}
                                         >
                                             <input
                                                 type="radio"
@@ -325,7 +325,7 @@ const Cart = () => {
 
                                 <button
                                     onClick={() => { setAddressForm(emptyAddressForm); setShowAddForm(true); }}
-                                    className="flex items-center gap-2 text-xs font-black text-red-600 hover:text-red-700 uppercase tracking-widest transition-all"
+                                    className="flex items-center gap-2 text-xs font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest transition-all"
                                 >
                                     <Plus size={14} /> Add New Address
                                 </button>
@@ -333,7 +333,7 @@ const Cart = () => {
                                 <button
                                     onClick={handleUseAddress}
                                     disabled={!pickedAddressId}
-                                    className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-red-600 transition-all uppercase tracking-widest text-xs mt-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all uppercase tracking-widest text-xs mt-2 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Check size={18} /> Use This Address
                                 </button>
@@ -344,7 +344,7 @@ const Cart = () => {
                                     <button
                                         type="button"
                                         onClick={() => setShowAddForm(false)}
-                                        className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-red-600 uppercase tracking-widest transition-all mb-2"
+                                        className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all mb-2"
                                     >
                                         <ArrowLeft size={14} /> Back to saved addresses
                                     </button>
@@ -387,7 +387,7 @@ const Cart = () => {
                                         <input className="glass-input w-full font-semibold text-slate-700" value={addressForm.country} onChange={e => setAddressForm({ ...addressForm, country: e.target.value })} />
                                     </div>
                                 </div>
-                                <button type="submit" className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-red-600 transition-all uppercase tracking-widest text-xs mt-2">
+                                <button type="submit" className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all uppercase tracking-widest text-xs mt-2">
                                     <Save size={18} /> Save & Use This Address
                                 </button>
                             </form>

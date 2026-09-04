@@ -252,6 +252,24 @@ export function createComplaint(c) {
     notifyDataChange();
 }
 
+export function createFeedback(feedback) {
+    const arr = LS.get('ri_feedbacks');
+    arr.unshift({
+        feedback_id: 'F' + Date.now() + Math.floor(Math.random() * 1000),
+        createdAt: new Date().toISOString(),
+        ...feedback,
+    });
+    LS.set('ri_feedbacks', arr);
+    notifyDataChange();
+
+    addNotification({
+        userId: 'admin',
+        title: 'New Feedback Received',
+        message: `${feedback.name} rated ${feedback.rating}/5 — "${feedback.message.slice(0, 60)}${feedback.message.length > 60 ? '…' : ''}"`,
+        type: 'feedback',
+    });
+}
+
 export function updateComplaintStatus(complaint_id, newStatus, meta = {}) {
     const arr = LS.get('ri_complaints');
     const i = arr.findIndex(x => x.complaint_id === complaint_id);
@@ -283,11 +301,4 @@ export function createScheme(scheme) {
         message: `${scheme.name} — get ${scheme.discountPercent}% off. Ends ${scheme.validTo}.`,
         type: 'scheme',
     });
-}
-
-export function getNotTriedProducts(customer_id) {
-    const all = LS.get('ri_products');
-    const orders = LS.get('ri_orders').filter(o => o.customer_id === customer_id);
-    const boughtIds = new Set(orders.map(o => o.product_id));
-    return all.filter(p => !boughtIds.has(p.product_id));
 }

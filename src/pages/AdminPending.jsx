@@ -1,22 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LS, updateOrderStatus, updateComplaintStatus } from '../utils/LSHelpers';
+import { LS, updateOrderStatus } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
-import { Check, X, Truck, PackageCheck, AlertCircle, Calendar, FileText } from 'lucide-react';
+import { Check, X, Truck, PackageCheck, FileText } from 'lucide-react';
 
 const AdminPending = () => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('pending'); // pending, approved, dispatched, complaints
+    const [activeTab, setActiveTab] = useState('pending'); // pending, approved, dispatched
     const [orders, setOrders] = useState([]);
-    const [complaints, setComplaints] = useState([]);
 
     // Modal State
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalAction, setModalAction] = useState(null); // 'dispatch', 'deliver'
-    const [formData, setFormData] = useState({ vehicleNo: '', expectedDate: '', proof: '', receivedBy: '' });
+    const [formData, setFormData] = useState({ qty: '', vehicleNo: '', expectedDate: '', proof: '', receivedBy: '' });
 
     const refreshData = useCallback(() => {
         setOrders(LS.get('ri_orders'));
-        setComplaints(LS.get('ri_complaints'));
     }, []);
 
     useEffect(() => {
@@ -27,7 +25,7 @@ const AdminPending = () => {
     }, [refreshData]);
 
     if (user?.role !== 'admin') {
-        return <div className="p-10 text-center text-red-500 font-bold">Access Denied: Admin Only</div>;
+        return <div className="p-10 text-center text-indigo-500 font-bold">Access Denied: Admin Only</div>;
     }
 
     const handleApprove = (id) => updateOrderStatus(id, 'APPROVED', { by: user.id });
@@ -36,18 +34,20 @@ const AdminPending = () => {
     const openDispatchModal = (order) => {
         setSelectedOrder(order);
         setModalAction('dispatch');
-        setFormData({ vehicleNo: '', expectedDate: '', proof: '', receivedBy: '' });
+        setFormData({ qty: order.quantity, vehicleNo: '', expectedDate: '', proof: '', receivedBy: '' });
     };
 
     const openDeliverModal = (order) => {
         setSelectedOrder(order);
         setModalAction('deliver');
-        setFormData({ vehicleNo: '', expectedDate: '', proof: '', receivedBy: '' });
+        setFormData({ qty: '', vehicleNo: '', expectedDate: '', proof: '', receivedBy: '' });
     };
 
     const submitModal = () => {
         if (modalAction === 'dispatch') {
+            const dispatchedQty = Math.min(Math.max(Number(formData.qty) || 0, 0), selectedOrder.quantity);
             updateOrderStatus(selectedOrder.order_id, 'DISPATCHED', {
+                dispatchedQty,
                 vehicleNo: formData.vehicleNo,
                 expectedDate: formData.expectedDate,
                 by: user.id
@@ -61,10 +61,6 @@ const AdminPending = () => {
         }
         setModalAction(null);
         setSelectedOrder(null);
-    };
-
-    const complaintAction = (id, status) => {
-        updateComplaintStatus(id, status, { by: user.id });
     };
 
     const filteredOrders = () => {
@@ -86,53 +82,23 @@ const AdminPending = () => {
 
                 {/* Tabs */}
                 <div className="flex gap-1 border-b border-slate-100 pb-0.5 overflow-x-auto custom-scrollbar">
-                    {['pending', 'approved', 'dispatched', 'complaints'].map(tab => (
+                    {['pending', 'approved', 'dispatched'].map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-5 py-2.5 capitalize font-black text-[10px] tracking-widest rounded-t-2xl transition-all duration-300 border-x border-t ${activeTab === tab
-                                ? 'bg-white text-red-600 border-slate-100 -mb-[2px] shadow-sm'
+                            className={`px-5 py-2.5 capitalize font-black text-[10px] tracking-widest rounded-t-2xl transition-all duration-300 border-x border-t whitespace-nowrap ${activeTab === tab
+                                ? 'bg-white text-indigo-600 border-slate-100 -mb-[2px] shadow-sm'
                                 : 'text-slate-400 border-transparent hover:text-slate-600 hover:bg-slate-50'
                                 }`}
                         >
-                            {tab === 'complaints' ? 'Complaints' : `${tab} Orders`}
+                            {`${tab} Orders`}
                         </button>
                     ))}
                 </div>
 
                 {/* Content */}
                 <div className="min-h-[400px]">
-                    {activeTab === 'complaints' ? (
-                        <div className="space-y-4 pb-12">
-                            {complaints.length === 0 && (
-                                <div className="text-center py-20 bg-white/50 rounded-3xl border border-dashed border-slate-300">
-                                    <AlertCircle className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No complaints found</p>
-                                </div>
-                            )}
-                            {complaints.map(c => (
-                                <div key={c.complaint_id} className="glass-card p-6 flex items-start justify-between group">
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <span className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full border ${c.status === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-green-50 text-green-600 border-green-200'}`}>{c.status}</span>
-                                            <span className="text-xs font-black text-slate-400 tracking-wider">#{c.complaint_id}</span>
-                                        </div>
-                                        <p className="text-slate-700 font-bold mb-1">{c.description}</p>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Prod: {c.product_id} • User: {c.customer_id}</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        {c.status === 'PENDING' && (
-                                            <button onClick={() => complaintAction(c.complaint_id, 'IN-PROGRESS')} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all">Start</button>
-                                        )}
-                                        {c.status !== 'RESOLVED' && (
-                                            <button onClick={() => complaintAction(c.complaint_id, 'RESOLVED')} className="px-4 py-2 bg-white text-slate-900 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-all">Resolve</button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="space-y-4 pb-12">
+                    <div className="space-y-4 pb-12">
                             {filteredOrders().length === 0 && (
                                 <div className="text-center py-20 bg-white/50 rounded-3xl border border-dashed border-slate-300">
                                     <FileText className="w-12 h-12 text-slate-200 mx-auto mb-3" />
@@ -150,7 +116,7 @@ const AdminPending = () => {
                                             Product: <span className="text-slate-900 font-bold">{order.product_id}</span> × {order.quantity}
                                         </p>
                                         <p className="text-sm text-slate-600 font-medium">
-                                            Amount: <span className="text-red-600 font-black">₹{order.amount}</span> <span className="text-[10px] uppercase font-black text-slate-400 ml-1">({order.paymentType})</span>
+                                            Amount: <span className="text-indigo-600 font-black">₹{order.amount}</span> <span className="text-[10px] uppercase font-black text-slate-400 ml-1">({order.paymentType})</span>
                                         </p>
                                         <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2 px-2 py-0.5 bg-slate-50 rounded-md inline-block border border-slate-100">User: {order.customer_id}</p>
                                     </div>
@@ -160,18 +126,18 @@ const AdminPending = () => {
                                                 <button onClick={() => handleApprove(order.order_id)} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20">
                                                     <Check size={14} /> Approve
                                                 </button>
-                                                <button onClick={() => handleReject(order.order_id)} className="flex items-center gap-2 px-5 py-2.5 bg-white text-rose-600 border-2 border-rose-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 transition-all">
+                                                <button onClick={() => handleReject(order.order_id)} className="flex items-center gap-2 px-5 py-2.5 bg-white text-blue-600 border-2 border-blue-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition-all">
                                                     <X size={14} /> Reject
                                                 </button>
                                             </>
                                         )}
                                         {activeTab === 'approved' && (
-                                            <button onClick={() => openDispatchModal(order)} className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg shadow-slate-900/20">
+                                            <button onClick={() => openDispatchModal(order)} className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-slate-900/20">
                                                 <Truck size={14} /> Dispatch
                                             </button>
                                         )}
                                         {activeTab === 'dispatched' && (
-                                            <button onClick={() => openDeliverModal(order)} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-red-600 to-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-red-500/20">
+                                            <button onClick={() => openDeliverModal(order)} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-indigo-600 to-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-indigo-500/20">
                                                 <PackageCheck size={14} /> Mark Delivered
                                             </button>
                                         )}
@@ -179,7 +145,6 @@ const AdminPending = () => {
                                 </div>
                             ))}
                         </div>
-                    )}
                 </div>
             </div>
 
@@ -198,6 +163,20 @@ const AdminPending = () => {
                         <div className="space-y-6">
                             {modalAction === 'dispatch' && (
                                 <>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                                            Dispatch Qty <span className="normal-case text-slate-300">(of {selectedOrder?.quantity} ordered)</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={selectedOrder?.quantity}
+                                            className="glass-input w-full font-bold text-slate-700"
+                                            placeholder="Quantity being dispatched"
+                                            value={formData.qty}
+                                            onChange={e => setFormData({ ...formData, qty: e.target.value })}
+                                        />
+                                    </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vehicle Details</label>
                                         <input
@@ -247,7 +226,7 @@ const AdminPending = () => {
 
                             <div className="flex gap-4 pt-6">
                                 <button onClick={() => setModalAction(null)} className="flex-1 py-4 bg-white text-slate-400 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-slate-50 transition-all border border-slate-100">Cancel Action</button>
-                                <button onClick={submitModal} className="flex-1 py-4 bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-red-600 transition-all shadow-xl shadow-slate-900/20">Process Final</button>
+                                <button onClick={submitModal} className="flex-1 py-4 bg-slate-900 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-indigo-600 transition-all shadow-xl shadow-slate-900/20">Process Final</button>
                             </div>
                         </div>
                     </div>

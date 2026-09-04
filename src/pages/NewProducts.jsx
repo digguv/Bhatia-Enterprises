@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LS } from '../utils/LSHelpers';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { ShoppingBag, Star, Plus, X, Upload, Image as ImageIcon } from 'lucide-react';
 
 const NewProducts = () => {
     const { user } = useAuth();
+    const { addToCart } = useCart();
     const [products, setProducts] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const navigate = useNavigate();
 
     // Form State
     const [formData, setFormData] = useState({
@@ -29,8 +29,8 @@ const NewProducts = () => {
         loadProducts();
     }, [loadProducts]);
 
-    const handleOrder = (id) => {
-        navigate('/place-order', { state: { preselectedProductId: id } });
+    const handleOrder = (product) => {
+        addToCart(product, 1);
     };
 
     const handleImageUpload = (e) => {
@@ -73,14 +73,14 @@ const NewProducts = () => {
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                            <Star className="text-red-500 fill-red-500" size={20} /> New Launches
+                            <Star className="text-indigo-500 fill-indigo-500" size={20} /> New Launches
                         </h2>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Fresh Arrivals from our Factory</p>
                     </div>
                     {user?.role === 'admin' && (
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-2xl shadow-xl hover:bg-red-600 transition-all font-black text-[10px] uppercase tracking-widest"
+                            className="flex items-center gap-2 px-6 py-2.5 bg-slate-900 text-white rounded-2xl shadow-xl hover:bg-indigo-600 transition-all font-black text-[10px] uppercase tracking-widest"
                         >
                             <Plus size={16} /> Product Launch
                         </button>
@@ -95,7 +95,7 @@ const NewProducts = () => {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                                     <p className="text-white text-[10px] font-bold line-clamp-2">{p.description}</p>
                                 </div>
-                                <span className="absolute top-3 left-3 bg-red-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-xl tracking-widest uppercase">New Launch</span>
+                                <span className="absolute top-3 left-3 bg-indigo-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-xl tracking-widest uppercase">New Launch</span>
                             </div>
                             <div className="flex-1 flex flex-col">
                                 <div className="flex justify-between items-start mb-1">
@@ -109,8 +109,8 @@ const NewProducts = () => {
                                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Price</span>
                                         <span className="font-black text-lg text-slate-900 leading-none">₹{p.price}</span>
                                     </div>
-                                    <button onClick={() => handleOrder(p.product_id)} className="flex items-center gap-2 px-5 py-2.5 bg-red-50 text-red-600 rounded-2xl hover:bg-red-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest border border-red-100/50 shadow-sm hover:shadow-xl hover:shadow-red-500/20 active:scale-95 leading-none">
-                                        <ShoppingBag size={14} /> Buy Now
+                                    <button onClick={() => handleOrder(p)} className="flex items-center gap-2 px-5 py-2.5 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest border border-indigo-100/50 shadow-sm hover:shadow-xl hover:shadow-indigo-500/20 active:scale-95 leading-none">
+                                        <ShoppingBag size={14} /> Add to Cart
                                     </button>
                                 </div>
                             </div>
@@ -188,7 +188,7 @@ const NewProducts = () => {
                                     ) : (
                                         <div className="flex flex-col items-center justify-center text-slate-400 py-2">
                                             <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-3">
-                                                <Upload size={20} className="text-red-500" />
+                                                <Upload size={20} className="text-indigo-500" />
                                             </div>
                                             <p className="text-[10px] font-black uppercase tracking-widest">Upload Specification Image</p>
                                             <p className="text-[8px] font-bold text-slate-300 mt-1">PNG, JPG PREFERRED</p>
@@ -208,7 +208,7 @@ const NewProducts = () => {
                                 />
                             </div>
 
-                            <button type="submit" className="w-full py-5 bg-slate-900 text-white font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] shadow-2xl hover:bg-red-600 active:scale-95 transition-all mt-4 border-none">
+                            <button type="submit" className="w-full py-5 bg-slate-900 text-white font-black uppercase tracking-widest text-[11px] rounded-[1.5rem] shadow-2xl hover:bg-indigo-600 active:scale-95 transition-all mt-4 border-none">
                                 Commit Product Launch
                             </button>
                         </form>
