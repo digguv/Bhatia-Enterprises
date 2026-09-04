@@ -2,20 +2,24 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LS } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { Plus, Edit3, Save, X, Upload, ShoppingCart, Check, ArrowLeft } from 'lucide-react';
+import { Plus, Minus, Edit3, Save, X, Upload, ShoppingCart, ArrowLeft, Heart, ChevronDown } from 'lucide-react';
 import Hero from '../components/Hero';
+import { useWishlist } from '../context/WishlistContext';
+import SelectVariantModal from '../components/SelectVariantModal';
 
 const AllProducts = () => {
     const { user } = useAuth();
-    const { addToCart } = useCart();
+    const { cart, addToCart, updateQty } = useCart();
+    const { isWishlisted, toggleWishlist } = useWishlist();
     const [products, setProducts] = useState([]);
-    const [addedId, setAddedId] = useState(null);
     const [activeCategory, setActiveCategory] = useState(null);
+
+    // Variant selector modal for customer
+    const [selectedProductForVariant, setSelectedProductForVariant] = useState(null);
+    const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
 
     const handleAddToCart = (product) => {
         addToCart(product, 1);
-        setAddedId(product.product_id);
-        setTimeout(() => setAddedId(id => (id === product.product_id ? null : id)), 1200);
     };
     // Modal & Form
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,10 +27,13 @@ const AllProducts = () => {
     const [formData, setFormData] = useState({
         name: '',
         price: '',
+        mrp: '',
         category: 'Writing Instruments',
         description: '',
         image: '',
-        stock: 100 // Default stock
+        stock: 100, // Default stock
+        hasVariants: false,
+        variants: []
     });
 
     const loadData = useCallback(() => {
@@ -60,20 +67,26 @@ const AllProducts = () => {
             setFormData({
                 name: product.name,
                 price: product.price,
+                mrp: product.mrp || '',
                 category: product.category,
                 description: product.description || '',
                 image: product.image,
-                stock: product.stock !== undefined ? product.stock : 100
+                stock: product.stock !== undefined ? product.stock : 100,
+                hasVariants: !!product.hasVariants,
+                variants: product.variants ? JSON.parse(JSON.stringify(product.variants)) : []
             });
         } else {
             setEditingProduct(null);
             setFormData({
                 name: '',
                 price: '',
+                mrp: '',
                 category: categories[0] || 'Writing Instruments',
                 description: '',
                 image: '',
-                stock: 100
+                stock: 100,
+                hasVariants: false,
+                variants: []
             });
         }
         setIsModalOpen(true);
@@ -83,15 +96,32 @@ const AllProducts = () => {
         e.preventDefault();
         const current = LS.get('ri_products');
 
+        // If variants enabled and has items, ensure product price reflects the first/lowest variant
+        let finalPrice = Number(formData.price);
+        let finalMrp = formData.mrp ? Number(formData.mrp) : undefined;
+        if (formData.hasVariants && formData.variants.length > 0) {
+            const lowestPrice = Math.min(...formData.variants.map(v => Number(v.price) || finalPrice));
+            if (lowestPrice && lowestPrice !== Infinity) {
+                finalPrice = lowestPrice;
+            }
+        }
+
+        const productPayload = {
+            ...formData,
+            price: finalPrice,
+            mrp: finalMrp,
+            stock: Number(formData.stock),
+            hasVariants: !!formData.hasVariants,
+            variants: formData.hasVariants ? formData.variants : []
+        };
+
         if (editingProduct) {
             // Edit Mode
             const idx = current.findIndex(p => p.product_id === editingProduct.product_id);
             if (idx > -1) {
                 current[idx] = {
                     ...current[idx],
-                    ...formData,
-                    price: Number(formData.price),
-                    stock: Number(formData.stock)
+                    ...productPayload
                 };
                 LS.set('ri_products', current);
             }
@@ -100,9 +130,7 @@ const AllProducts = () => {
             const newId = "P" + (current.length + 101).toString().padStart(3, '0');
             const newProduct = {
                 product_id: newId,
-                ...formData,
-                price: Number(formData.price),
-                stock: Number(formData.stock),
+                ...productPayload,
                 launchDate: new Date().toISOString().split('T')[0]
             };
             current.unshift(newProduct);
@@ -128,49 +156,116 @@ const AllProducts = () => {
         window.scrollTo({ top: 0 });
     };
 
-    const renderProductCard = (product) => (
+    const renderProductCard = (product) => {
+        const cartItem = cart?.find(i => i.product_id === product.product_id && !i.variant_id);
+        const hasVariants = product.hasVariants && product.variants?.length > 0;
+        const discount = product.mrp && Number(product.mrp) > Number(product.price)
+            ? Math.round(((Number(product.mrp) - Number(product.price)) / Number(product.mrp)) * 100)
+            : null;
+
+        // Check if any variant of this product is in the cart
+        const variantsInCartCount = cart?.filter(i => i.product_id === product.product_id).reduce((sum, i) => sum + i.qty, 0) || 0;
+
+        return (
         <div key={product.product_id} className="glass-card group overflow-hidden flex flex-col p-3 border-none transition-all duration-500 hover:-translate-y-1">
-            <div className="relative h-40 bg-slate-50 overflow-hidden rounded-2xl mb-3">
+            <div className="relative h-44 bg-slate-50 overflow-hidden rounded-2xl mb-3">
                 <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     onError={(e) => { e.target.src = 'https://placehold.co/400?text=Product' }}
                 />
+                
+                {/* Discount Badge */}
+                {discount && (
+                    <span className="absolute top-2 right-2 bg-slate-900/90 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
+                        -{discount}%
+                    </span>
+                )}
+
+                <button
+                    onClick={() => toggleWishlist(product)}
+                    className={`absolute top-2 left-2 p-2 rounded-xl backdrop-blur-xl shadow-sm transition-all ${isWishlisted(product.product_id) ? 'bg-indigo-600 text-white' : 'bg-white/90 text-slate-400 hover:text-indigo-600'}`}
+                    aria-label="Toggle wishlist"
+                >
+                    <Heart size={14} fill={isWishlisted(product.product_id) ? 'currentColor' : 'none'} />
+                </button>
                 {user?.role === 'admin' && (
                     <button
                         onClick={() => handleOpenModal(product)}
-                        className="absolute top-2 right-2 p-2.5 bg-white/90 backdrop-blur-xl rounded-xl text-slate-400 hover:text-indigo-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
+                        className="absolute bottom-2 right-2 p-2.5 bg-white/90 backdrop-blur-xl rounded-xl text-slate-400 hover:text-indigo-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
                     >
                         <Edit3 size={14} />
                     </button>
                 )}
             </div>
             <div className="flex-1 flex flex-col">
-                <h3 className="font-black text-slate-900 mb-0.5 line-clamp-1 text-sm tracking-tight">{product.name}</h3>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">{product.product_id}</p>
+                <h3 className="font-black text-slate-900 mb-1 line-clamp-1 text-sm tracking-tight" title={product.name}>
+                    {product.name}
+                </h3>
+                {product.description && (
+                    <p className="text-[10px] font-medium text-slate-400 line-clamp-2 mb-2 leading-relaxed">{product.description}</p>
+                )}
 
-                <div className="mt-auto flex items-center justify-between gap-3">
-                    <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">Valuation</span>
-                        <span className="font-black text-base text-slate-900 leading-none">₹{product.price}</span>
+                <div className="mt-auto space-y-3">
+                    <div className="flex items-center gap-2">
+                        {product.mrp && Number(product.mrp) > Number(product.price) && (
+                            <span className="text-xs text-slate-400 line-through">
+                                Rs. {product.mrp}
+                            </span>
+                        )}
+                        <span className="font-black text-base text-slate-900 leading-none">
+                            Rs. {product.price}
+                        </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="text-[9px] font-black px-2 py-1 bg-slate-50 border border-slate-100 rounded-lg text-slate-500 uppercase tracking-widest">
-                            Stock: {product.stock}
+
+                    {hasVariants ? (
+                        <button
+                            onClick={() => {
+                                setSelectedProductForVariant(product);
+                                setIsVariantModalOpen(true);
+                            }}
+                            className="w-full py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 text-xs font-bold bg-[#3462a6] hover:bg-[#2b528c] text-white"
+                        >
+                            <span>Select variant</span>
+                            <ChevronDown size={14} />
+                            {variantsInCartCount > 0 && (
+                                <span className="ml-1 text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">
+                                    ({variantsInCartCount})
+                                </span>
+                            )}
+                        </button>
+                    ) : cartItem ? (
+                        <div className="w-full flex items-center justify-between gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-2 py-1">
+                            <button
+                                onClick={() => updateQty(cartItem.cart_id || product.product_id, cartItem.qty - 1)}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg text-indigo-600 hover:bg-white transition-all"
+                                aria-label="Decrease quantity"
+                            >
+                                <Minus size={14} />
+                            </button>
+                            <span className="text-sm font-black text-indigo-700">{cartItem.qty}</span>
+                            <button
+                                onClick={() => updateQty(cartItem.cart_id || product.product_id, cartItem.qty + 1)}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg text-indigo-600 hover:bg-white transition-all"
+                                aria-label="Increase quantity"
+                            >
+                                <Plus size={14} />
+                            </button>
                         </div>
+                    ) : (
                         <button
                             onClick={() => handleAddToCart(product)}
-                            className={`w-9 h-9 rounded-xl shadow-sm transition-all flex items-center justify-center active:scale-90 ${addedId === product.product_id ? 'bg-emerald-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white'}`}
-                            title="Add to Cart"
+                            className="w-full py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 text-xs font-bold bg-[#3462a6] hover:bg-[#2b528c] text-white"
                         >
-                            {addedId === product.product_id ? <Check size={16} /> : <ShoppingCart size={16} />}
+                            Add to cart
                         </button>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
-    );
+        );
+    };
 
     return (
         <>
@@ -253,7 +348,7 @@ const AllProducts = () => {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-3 gap-4">
                                 <div>
                                     <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Price (₹)</label>
                                     <input
@@ -262,6 +357,16 @@ const AllProducts = () => {
                                         value={formData.price}
                                         onChange={e => setFormData({ ...formData, price: e.target.value })}
                                         required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">MRP (₹)</label>
+                                    <input
+                                        type="number"
+                                        className="glass-input w-full font-semibold text-slate-700"
+                                        value={formData.mrp}
+                                        placeholder="Optional"
+                                        onChange={e => setFormData({ ...formData, mrp: e.target.value })}
                                     />
                                 </div>
                                 <div>
@@ -274,6 +379,179 @@ const AllProducts = () => {
                                         required
                                     />
                                 </div>
+                            </div>
+
+                            {/* Enable Variants Section */}
+                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                                            Enable Variants (Colours, Sizes, etc.)
+                                        </h4>
+                                        <p className="text-[11px] text-slate-500">
+                                            Turn on to let customers choose colour or size variants
+                                        </p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={formData.hasVariants}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    hasVariants: checked,
+                                                    variants: checked && (!prev.variants || prev.variants.length === 0)
+                                                        ? [
+                                                            { variant_id: 'v_' + Date.now() + '_1', name: 'Yellow', price: prev.price || '', mrp: prev.mrp || '', inStock: true },
+                                                            { variant_id: 'v_' + Date.now() + '_2', name: 'Green', price: prev.price || '', mrp: prev.mrp || '', inStock: true }
+                                                        ]
+                                                        : prev.variants
+                                                }));
+                                            }}
+                                        />
+                                        <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+
+                                {formData.hasVariants && (
+                                    <div className="space-y-3 pt-3 border-t border-slate-200">
+                                        {/* Quick Presets */}
+                                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">Quick Add:</span>
+                                            {['Yellow', 'Green', 'Pink', 'Blue', 'Black', 'Red', 'S', 'M', 'L', 'XL'].map(preset => (
+                                                <button
+                                                    key={preset}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            variants: [
+                                                                ...(prev.variants || []),
+                                                                {
+                                                                    variant_id: 'v_' + Date.now() + Math.floor(Math.random() * 100),
+                                                                    name: preset,
+                                                                    price: prev.price || '',
+                                                                    mrp: prev.mrp || '',
+                                                                    inStock: true
+                                                                }
+                                                            ]
+                                                        }));
+                                                    }}
+                                                    className="px-2 py-0.5 bg-white border border-slate-200 rounded-md text-[10px] font-bold text-slate-600 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+                                                >
+                                                    + {preset}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* Variants list */}
+                                        <div className="space-y-2">
+                                            {(formData.variants || []).map((v, vIdx) => (
+                                                <div key={v.variant_id || vIdx} className="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
+                                                    <div className="flex-1 min-w-[90px]">
+                                                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Variant</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="e.g. Yellow"
+                                                            value={v.name}
+                                                            onChange={e => {
+                                                                const next = [...formData.variants];
+                                                                next[vIdx].name = e.target.value;
+                                                                setFormData({ ...formData, variants: next });
+                                                            }}
+                                                            className="w-full text-xs font-bold text-slate-800 border-b border-slate-200 py-1 focus:outline-none focus:border-indigo-600 bg-transparent"
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div className="w-16">
+                                                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Price</label>
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Price"
+                                                            value={v.price}
+                                                            onChange={e => {
+                                                                const next = [...formData.variants];
+                                                                next[vIdx].price = e.target.value;
+                                                                setFormData({ ...formData, variants: next });
+                                                            }}
+                                                            className="w-full text-xs font-bold text-slate-800 border-b border-slate-200 py-1 focus:outline-none focus:border-indigo-600 bg-transparent"
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div className="w-16">
+                                                        <label className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">MRP</label>
+                                                        <input
+                                                            type="number"
+                                                            placeholder="MRP"
+                                                            value={v.mrp}
+                                                            onChange={e => {
+                                                                const next = [...formData.variants];
+                                                                next[vIdx].mrp = e.target.value;
+                                                                setFormData({ ...formData, variants: next });
+                                                            }}
+                                                            className="w-full text-xs font-bold text-slate-800 border-b border-slate-200 py-1 focus:outline-none focus:border-indigo-600 bg-transparent"
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0">
+                                                        <label className="flex items-center gap-1 cursor-pointer text-slate-600">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={v.inStock !== false}
+                                                                onChange={e => {
+                                                                    const next = [...formData.variants];
+                                                                    next[vIdx].inStock = e.target.checked;
+                                                                    setFormData({ ...formData, variants: next });
+                                                                }}
+                                                                className="rounded text-indigo-600"
+                                                            />
+                                                            <span className="text-[10px] font-semibold">Stock</span>
+                                                        </label>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    variants: formData.variants.filter((_, i) => i !== vIdx)
+                                                                });
+                                                            }}
+                                                            className="p-1 text-slate-300 hover:text-red-600 transition-colors"
+                                                        >
+                                                            <X size={15} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    variants: [
+                                                        ...(prev.variants || []),
+                                                        {
+                                                            variant_id: 'v_' + Date.now() + Math.floor(Math.random() * 100),
+                                                            name: '',
+                                                            price: prev.price || '',
+                                                            mrp: prev.mrp || '',
+                                                            inStock: true
+                                                        }
+                                                    ]
+                                                }));
+                                            }}
+                                            className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 py-1"
+                                        >
+                                            <Plus size={14} /> Add Another Variant
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <div>
@@ -329,6 +607,16 @@ const AllProducts = () => {
                     </div>
                 </div>
             )}
+
+            {/* Select Variant Bottom Sheet Modal for Customers */}
+            <SelectVariantModal
+                product={selectedProductForVariant}
+                isOpen={isVariantModalOpen}
+                onClose={() => {
+                    setIsVariantModalOpen(false);
+                    setSelectedProductForVariant(null);
+                }}
+            />
         </>
     );
 };

@@ -73,16 +73,77 @@ const CATEGORY_DATA = [
     { category: 'Educational & Study Material', items: ['Dictionary', 'General Knowledge Book', 'Drawing Book Set', 'Practice Book', 'Exam Guide', 'Question Bank', 'Flash Cards', 'Educational Charts', 'Maps', 'Educational Stickers'] },
 ];
 
-let productCounter = 1;
+// Specific curated showcase products with variants (matching user references)
+const FEATURED_PRODUCTS = [
+    {
+        product_id: 'P001',
+        name: 'Luxor 1852 Highlighter',
+        price: 22,
+        mrp: 25,
+        category: 'Writing Instruments',
+        image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=500&auto=format&fit=crop&q=60',
+        hasVariants: true,
+        variants: [
+            { variant_id: 'v1', name: 'Yellow', price: 22, mrp: 25, inStock: true },
+            { variant_id: 'v2', name: 'Green', price: 22, mrp: 25, inStock: true },
+            { variant_id: 'v3', name: 'Pink', price: 22, mrp: 25, inStock: true },
+            { variant_id: 'v4', name: 'Orange', price: 22, mrp: 25, inStock: true }
+        ],
+        launchDate: new Date().toISOString().split('T')[0],
+        description: 'Vibrant fluorescent highlighters with chisel tip for smooth underlining.'
+    },
+    {
+        product_id: 'P002',
+        name: 'Unomax Highlighter - Yellow',
+        price: 22,
+        mrp: 25,
+        category: 'Writing Instruments',
+        image: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=500&auto=format&fit=crop&q=60',
+        hasVariants: false,
+        variants: [],
+        launchDate: new Date().toISOString().split('T')[0],
+        description: 'Bright neon yellow ink with ultra-long cap-off time.'
+    },
+    {
+        product_id: 'P003',
+        name: 'Camlin Brush Pen - 14 Shades',
+        price: 203,
+        mrp: 225,
+        category: 'Art & Drawing',
+        image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=500&auto=format&fit=crop&q=60',
+        hasVariants: true,
+        variants: [
+            { variant_id: 'v11', name: '14 Shades Pack', price: 203, mrp: 225, inStock: true },
+            { variant_id: 'v12', name: '24 Shades Pack', price: 340, mrp: 380, inStock: true }
+        ],
+        launchDate: new Date().toISOString().split('T')[0],
+        description: 'Flexible brush tip pens for expressive strokes, calligraphy and blending.'
+    }
+];
+
+seedData.ri_products.push(...FEATURED_PRODUCTS);
+
+let productCounter = 4;
 CATEGORY_DATA.forEach(({ category, items }) => {
     items.forEach((name) => {
         const id = `P${String(productCounter).padStart(3, '0')}`;
+        const hasVar = productCounter % 7 === 0;
+        const basePrice = (Math.floor(Math.random() * 40) + 5) * 10;
+        const mrp = Math.round(basePrice * 1.15);
+
         seedData.ri_products.push({
             product_id: id,
             name,
-            price: (Math.floor(Math.random() * 40) + 5) * 10,
+            price: basePrice,
+            mrp,
             category,
             image: `https://picsum.photos/seed/${id}/400/400`,
+            hasVariants: hasVar,
+            variants: hasVar ? [
+                { variant_id: `${id}_v1`, name: 'Blue', price: basePrice, mrp, inStock: true },
+                { variant_id: `${id}_v2`, name: 'Black', price: basePrice, mrp, inStock: true },
+                { variant_id: `${id}_v3`, name: 'Red', price: basePrice, mrp, inStock: true }
+            ] : [],
             launchDate: productCounter % 9 === 0
                 ? new Date(Date.now() - Math.floor(Math.random() * 20) * 86400000).toISOString().split('T')[0]
                 : '2025-01-01'
@@ -91,7 +152,7 @@ CATEGORY_DATA.forEach(({ category, items }) => {
     });
 });
 
-const SEED_VERSION = 'stationery-v1';
+const SEED_VERSION = 'stationery-v2';
 
 export function seedLocalStorage() {
     const products = localStorage.getItem('ri_products');

@@ -7,7 +7,8 @@ const STORAGE_KEY = 'ri_cart';
 export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState(() => {
         try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return parsed.map(item => ({ ...item, cart_id: item.cart_id || item.product_id }));
         } catch {
             return [];
         }
@@ -17,18 +18,22 @@ export const CartProvider = ({ children }) => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
     }, [cart]);
 
-    const addToCart = useCallback((product, qty = 1) => {
+    const addToCart = useCallback((product, qty = 1, variant = null) => {
+        const cart_id = variant ? `${product.product_id}::${variant.variant_id}` : product.product_id;
         setCart(prev => {
-            const idx = prev.findIndex(item => item.product_id === product.product_id);
+            const idx = prev.findIndex(item => item.cart_id === cart_id);
             if (idx > -1) {
                 const next = [...prev];
                 next[idx] = { ...next[idx], qty: next[idx].qty + qty };
                 return next;
             }
             return [...prev, {
+                cart_id,
                 product_id: product.product_id,
+                variant_id: variant?.variant_id || null,
+                variant_name: variant?.name || null,
                 name: product.name,
-                price: product.price,
+                price: variant ? Number(variant.price) : product.price,
                 image: product.image,
                 category: product.category,
                 qty
@@ -36,15 +41,15 @@ export const CartProvider = ({ children }) => {
         });
     }, []);
 
-    const updateQty = useCallback((product_id, qty) => {
+    const updateQty = useCallback((cart_id, qty) => {
         setCart(prev => {
-            if (qty <= 0) return prev.filter(item => item.product_id !== product_id);
-            return prev.map(item => item.product_id === product_id ? { ...item, qty } : item);
+            if (qty <= 0) return prev.filter(item => item.cart_id !== cart_id);
+            return prev.map(item => item.cart_id === cart_id ? { ...item, qty } : item);
         });
     }, []);
 
-    const removeFromCart = useCallback((product_id) => {
-        setCart(prev => prev.filter(item => item.product_id !== product_id));
+    const removeFromCart = useCallback((cart_id) => {
+        setCart(prev => prev.filter(item => item.cart_id !== cart_id));
     }, []);
 
     const clearCart = useCallback(() => setCart([]), []);

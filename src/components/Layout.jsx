@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import CartBar from './CartBar';
-import { Menu, Bell, Search, ShoppingBag, ListOrdered, HelpCircle, LogOut, ChevronDown, User, Tag, CheckCircle, Inbox, MessageSquare } from 'lucide-react';
+import { Menu, Bell, Search, ShoppingBag, ListOrdered, HelpCircle, LogOut, ChevronDown, User, Tag, CheckCircle, Inbox, MessageSquare, Heart, MessageCircle, Phone, Mail } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { getCustomerProfile, getNotificationsForUser, markNotificationRead, markAllNotificationsRead } from '../utils/LSHelpers';
 
 const timeAgo = (iso) => {
@@ -29,11 +30,13 @@ const Layout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const profileRef = useRef(null);
     const notifRef = useRef(null);
     const location = useLocation();
     const { user, logout } = useAuth();
     const { cartCount, clearCart } = useCart();
+    const { wishlistCount } = useWishlist();
     const [displayName, setDisplayName] = useState(user?.name || '');
     const [notifications, setNotifications] = useState([]);
 
@@ -83,6 +86,7 @@ const Layout = ({ children }) => {
     const profileMenuItems = [
         { icon: User, label: 'My Profile', path: '/profile' },
         { icon: ShoppingBag, label: 'Cart', path: '/cart', badge: cartCount },
+        { icon: Heart, label: 'Wishlist', path: '/wishlist', badge: wishlistCount },
         { icon: ListOrdered, label: 'My Orders', path: '/orders' },
         { icon: HelpCircle, label: 'Complaints', path: '/complaints' },
         { icon: MessageSquare, label: 'Feedback', path: '/feedback' },
@@ -96,6 +100,7 @@ const Layout = ({ children }) => {
             case '/complaints': return 'Support & Complaints';
             case '/new-products': return 'New Product Launches';
             case '/cart': return 'Your Cart';
+            case '/wishlist': return 'My Wishlist';
             case '/profile': return 'My Profile';
             case '/feedback': return 'Feedback';
             case '/admin/pending': return 'Admin Console';
@@ -137,6 +142,29 @@ const Layout = ({ children }) => {
                         </div>
 
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setMobileSearchOpen(o => !o)}
+                                className="lg:hidden p-2.5 rounded-2xl bg-white/60 hover:bg-white text-slate-500 hover:text-indigo-600 transition-all border border-white hover:shadow-xl hover:shadow-indigo-500/10"
+                                aria-label="Search"
+                            >
+                                <Search size={20} />
+                            </button>
+
+                            {user?.role !== 'admin' && (
+                                <Link
+                                    to="/wishlist"
+                                    className="relative p-2.5 rounded-2xl bg-white/60 hover:bg-white text-slate-500 hover:text-indigo-600 transition-all border border-white hover:shadow-xl hover:shadow-indigo-500/10"
+                                    aria-label="Wishlist"
+                                >
+                                    <Heart size={20} />
+                                    {wishlistCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-600 text-white text-[9px] font-black flex items-center justify-center ring-2 ring-white">
+                                            {wishlistCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            )}
+
                             <div className="relative" ref={notifRef}>
                                 <button
                                     onClick={() => setNotifOpen(o => !o)}
@@ -258,24 +286,74 @@ const Layout = ({ children }) => {
                     </div>
                 </header>
 
+                {mobileSearchOpen && (
+                    <div className="lg:hidden px-4 pb-3 pt-2 bg-white/40 backdrop-blur-3xl border-b border-white/20 sticky top-16 z-20">
+                        <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                            <Search size={16} className="text-slate-400" />
+                            <input
+                                type="text"
+                                autoFocus
+                                placeholder="Search products..."
+                                className="bg-transparent border-none outline-none text-xs w-full text-slate-700 placeholder:text-slate-400 font-bold"
+                            />
+                        </div>
+                    </div>
+                )}
+
                 <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
                     <div className="max-w-7xl mx-auto">
                         {children}
                     </div>
                 </main>
 
-                <footer className="py-6 text-center border-t border-slate-200/40 mt-auto">
-                    <p className="text-[10px] font-black tracking-[0.3em] uppercase text-slate-400 flex items-center justify-center gap-2">
-                        Powered By 
-                        <a 
-                            href="https://www.botivate.in" 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="bg-gradient-to-br from-indigo-600 to-blue-600 bg-clip-text text-transparent hover:from-slate-900 hover:to-slate-700 transition-all font-black"
-                        >
-                            Botivate
-                        </a>
-                    </p>
+                <footer className="border-t border-slate-200/40 mt-auto">
+                    <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="flex items-start gap-3 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                                    <MessageCircle size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-black text-slate-800">Customer Support</p>
+                                    <p className="text-xs text-slate-500 mt-1">Mon–Sat, 9:30am – 6:30pm IST</p>
+                                    <p className="text-xs text-slate-400 mt-1">We're here to help you grow.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                                    <Phone size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-black text-slate-800">Call Us</p>
+                                    <a href="tel:+919028105766" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 block mt-1">+91 90281 05766</a>
+                                    <p className="text-xs text-slate-400 mt-1">Mon–Sat, 9:30am – 6:30pm</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-3 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
+                                    <Mail size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-black text-slate-800">Email / Get in Touch</p>
+                                    <a href="mailto:bhatiamoto@gmail.com" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 block mt-1">bhatiamoto@gmail.com</a>
+                                    <p className="text-xs text-slate-400 mt-1">We typically reply within 24 hours.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="py-6 text-center border-t border-slate-200/40">
+                        <p className="text-[10px] font-black tracking-[0.3em] uppercase text-slate-400 flex items-center justify-center gap-2">
+                            Powered By
+                            <a
+                                href="https://www.botivate.in"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-gradient-to-br from-indigo-600 to-blue-600 bg-clip-text text-transparent hover:from-slate-900 hover:to-slate-700 transition-all font-black"
+                            >
+                                Botivate
+                            </a>
+                        </p>
+                    </div>
                 </footer>
             </div>
 

@@ -113,7 +113,7 @@ const AdminPending = () => {
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">{new Date(order.createdAt).toLocaleDateString()}</span>
                                         </div>
                                         <p className="text-sm text-slate-600 font-medium">
-                                            Product: <span className="text-slate-900 font-bold">{order.product_id}</span> × {order.quantity}
+                                            Product: <span className="text-slate-900 font-bold">{order.product_name || order.product_id}</span> {order.variant_name ? <span className="text-indigo-600 font-bold">({order.variant_name})</span> : null} × {order.quantity}
                                         </p>
                                         <p className="text-sm text-slate-600 font-medium">
                                             Amount: <span className="text-indigo-600 font-black">₹{order.amount}</span> <span className="text-[10px] uppercase font-black text-slate-400 ml-1">({order.paymentType})</span>

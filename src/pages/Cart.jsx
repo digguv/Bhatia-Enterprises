@@ -43,6 +43,9 @@ const Cart = () => {
     const [addressForm, setAddressForm] = useState(emptyAddressForm);
     const [pickedAddressId, setPickedAddressId] = useState(null);
 
+    // Order confirmation disclaimer modal
+    const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
     useEffect(() => {
         if (!user) return;
         const profile = getCustomerProfile(user.id);
@@ -89,6 +92,12 @@ const Cart = () => {
             return;
         }
 
+        // Show confirmation popup with required disclaimer
+        setConfirmModalOpen(true);
+    };
+
+    const executePlaceOrder = () => {
+        setConfirmModalOpen(false);
         const deliveryAddressText = formatAddress(selectedAddress);
 
         cart.forEach(item => {
@@ -96,6 +105,9 @@ const Cart = () => {
                 order_id: 'O' + Date.now() + Math.floor(Math.random() * 1000),
                 customer_id: user.id,
                 product_id: item.product_id,
+                product_name: item.name,
+                variant_id: item.variant_id || null,
+                variant_name: item.variant_name || null,
                 quantity: item.qty,
                 amount: item.price * item.qty,
                 address: deliveryAddressText,
@@ -149,33 +161,41 @@ const Cart = () => {
                     {/* Items */}
                     <div className="glass-panel p-4 md:p-6 space-y-3">
                         <h2 className="text-lg font-black text-slate-800 mb-2">Your Cart ({cart.length})</h2>
-                        {cart.map(item => (
-                            <div key={item.product_id} className="flex flex-wrap sm:flex-nowrap items-center gap-4 p-3 bg-white/60 rounded-2xl border border-slate-100">
-                                <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="w-16 h-16 rounded-xl object-cover bg-slate-100 shrink-0"
-                                    onError={(e) => { e.target.src = 'https://placehold.co/100' }}
-                                />
-                                <div className="flex-1 min-w-[120px]">
-                                    <h4 className="font-bold text-slate-800 text-sm truncate">{item.name}</h4>
-                                    <p className="text-xs text-slate-400">&#8377;{item.price} / unit</p>
-                                </div>
-                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl px-2 py-1">
-                                    <button onClick={() => updateQty(item.product_id, item.qty - 1)} className="p-1.5 text-slate-500 hover:text-indigo-600">
-                                        <Minus size={14} />
+                        {cart.map(item => {
+                            const itemId = item.cart_id || item.product_id;
+                            return (
+                                <div key={itemId} className="flex flex-wrap sm:flex-nowrap items-center gap-4 p-3 bg-white/60 rounded-2xl border border-slate-100">
+                                    <img
+                                        src={item.image}
+                                        alt={item.name}
+                                        className="w-16 h-16 rounded-xl object-cover bg-slate-100 shrink-0"
+                                        onError={(e) => { e.target.src = 'https://placehold.co/100' }}
+                                    />
+                                    <div className="flex-1 min-w-[120px]">
+                                        <h4 className="font-bold text-slate-800 text-sm truncate">{item.name}</h4>
+                                        {item.variant_name && (
+                                            <span className="inline-block text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md mt-0.5">
+                                                Variant: {item.variant_name}
+                                            </span>
+                                        )}
+                                        <p className="text-xs text-slate-400 mt-0.5">&#8377;{item.price} / unit</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl px-2 py-1">
+                                        <button onClick={() => updateQty(itemId, item.qty - 1)} className="p-1.5 text-slate-500 hover:text-indigo-600">
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="w-6 text-center text-sm font-black text-slate-800">{item.qty}</span>
+                                        <button onClick={() => updateQty(itemId, item.qty + 1)} className="p-1.5 text-slate-500 hover:text-indigo-600">
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                    <span className="w-20 text-right font-black text-slate-900 text-sm">&#8377;{(item.price * item.qty).toLocaleString()}</span>
+                                    <button onClick={() => removeFromCart(itemId)} className="text-slate-300 hover:text-indigo-600 p-2">
+                                        <Trash2 size={16} />
                                     </button>
-                                    <span className="w-6 text-center text-sm font-black text-slate-800">{item.qty}</span>
-                                    <button onClick={() => updateQty(item.product_id, item.qty + 1)} className="p-1.5 text-slate-500 hover:text-indigo-600">
-                                        <Plus size={14} />
-                                    </button>
                                 </div>
-                                <span className="w-20 text-right font-black text-slate-900 text-sm">&#8377;{(item.price * item.qty).toLocaleString()}</span>
-                                <button onClick={() => removeFromCart(item.product_id)} className="text-slate-300 hover:text-indigo-600 p-2">
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {/* Checkout form */}
@@ -392,6 +412,47 @@ const Cart = () => {
                                 </button>
                             </form>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Order Confirmation Disclaimer Modal */}
+            {confirmModalOpen && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-6 md:p-8 animate-fade-in-up border border-slate-100 space-y-5">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                                <AlertCircle size={26} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black text-slate-900 tracking-tight">Confirm Your Order</h3>
+                                <p className="text-xs text-slate-400 font-medium">Please review the notice below</p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200">
+                            <p className="text-sm font-medium text-amber-950 leading-relaxed">
+                                <span className="font-black text-amber-800">Note: </span>
+                                Prices and availability shown are indicative and may vary. Final price and availability will be confirmed at the time of order processing.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setConfirmModalOpen(false)}
+                                className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase tracking-wider transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={executePlaceOrder}
+                                className="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-black rounded-xl shadow-lg shadow-indigo-500/30 text-xs uppercase tracking-wider transition-all"
+                            >
+                                Okay
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

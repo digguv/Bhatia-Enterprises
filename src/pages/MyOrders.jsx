@@ -129,8 +129,10 @@ const MyOrders = () => {
                                             <p className="text-sm text-slate-500">
                                                 Placed on {new Date(order.createdAt).toLocaleDateString()}
                                             </p>
-                                            <p className="text-xs text-slate-400 mt-1">
-                                                Product ID: {order.product_id} &bull; Qty: {order.quantity}
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                <span className="font-semibold text-slate-700">{order.product_name || getProduct(order.product_id)?.name || order.product_id}</span>
+                                                {order.variant_name && <span className="ml-1.5 font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">({order.variant_name})</span>}
+                                                <span className="text-slate-400 ml-1.5">&bull; Qty: {order.quantity}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -357,7 +359,14 @@ const MyOrders = () => {
                                                 className="cursor-pointer hover:bg-slate-50/60 border-b border-slate-50 last:border-b-0"
                                             >
                                                 <td className="p-4 font-bold text-slate-800 whitespace-nowrap">{order.order_id}</td>
-                                                <td className="p-4 text-slate-600">{getProduct(order.product_id)?.name || order.product_id}</td>
+                                                <td className="p-4 text-slate-600">
+                                                    <span className="font-medium text-slate-800">{order.product_name || getProduct(order.product_id)?.name || order.product_id}</span>
+                                                    {order.variant_name && (
+                                                        <span className="block text-xs font-bold text-indigo-600">
+                                                            {order.variant_name}
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className="p-4 text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
                                                 <td className="p-4 text-right text-slate-600">{fulfillment.totalQty}</td>
                                                 <td className="p-4 text-right text-slate-600">{fulfillment.receivedQty}</td>
