@@ -19,6 +19,16 @@ const NewProducts = () => {
     const [selectedProductForVariant, setSelectedProductForVariant] = useState(null);
     const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
 
+    // Per-product qty input state (before adding to cart)
+    const [qtyInputs, setQtyInputs] = useState({});
+
+    const getQty = (pid) => Math.max(1, Number(qtyInputs[pid]) || 1);
+
+    const setQty = (pid, val) => {
+        const n = Math.max(1, Number(val) || 1);
+        setQtyInputs(prev => ({ ...prev, [pid]: n }));
+    };
+
     // Form State
     const [formData, setFormData] = useState({
         name: '',
@@ -43,7 +53,10 @@ const NewProducts = () => {
     }, [loadProducts]);
 
     const handleOrder = (product) => {
-        addToCart(product, 1);
+        const qty = getQty(product.product_id);
+        addToCart(product, qty);
+        // Reset qty input after adding
+        setQtyInputs(prev => ({ ...prev, [product.product_id]: 1 }));
     };
 
     const handleMultipleImageUpload = (e) => {
@@ -248,9 +261,36 @@ const NewProducts = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => handleOrder(p)} className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#3462a6] hover:bg-[#2b528c] text-white rounded-xl transition-all text-xs font-bold shadow-sm active:scale-95 leading-none">
-                                            Add to cart
-                                        </button>
+                                        <div className="space-y-2">
+                                            {/* Qty stepper */}
+                                            <div className="flex items-center gap-1.5 bg-slate-100 rounded-xl px-2 py-1">
+                                                <button
+                                                    onClick={() => setQty(p.product_id, getQty(p.product_id) - 1)}
+                                                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-indigo-600 transition-all"
+                                                    aria-label="Decrease quantity"
+                                                >
+                                                    <Minus size={13} />
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={getQty(p.product_id)}
+                                                    onChange={e => setQty(p.product_id, e.target.value)}
+                                                    className="flex-1 text-center text-sm font-black text-slate-800 bg-transparent border-none outline-none w-0 min-w-0"
+                                                    aria-label="Quantity"
+                                                />
+                                                <button
+                                                    onClick={() => setQty(p.product_id, getQty(p.product_id) + 1)}
+                                                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-indigo-600 transition-all"
+                                                    aria-label="Increase quantity"
+                                                >
+                                                    <Plus size={13} />
+                                                </button>
+                                            </div>
+                                            <button onClick={() => handleOrder(p)} className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#3462a6] hover:bg-[#2b528c] text-white rounded-xl transition-all text-xs font-bold shadow-sm active:scale-95 leading-none">
+                                                Add to cart
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>

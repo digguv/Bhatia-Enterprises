@@ -21,8 +21,21 @@ const AllProducts = () => {
     const [selectedProductForVariant, setSelectedProductForVariant] = useState(null);
     const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
 
+    // Per-product qty input state (before adding to cart)
+    const [qtyInputs, setQtyInputs] = useState({});
+
+    const getQty = (pid) => Math.max(1, Number(qtyInputs[pid]) || 1);
+
+    const setQty = (pid, val) => {
+        const n = Math.max(1, Number(val) || 1);
+        setQtyInputs(prev => ({ ...prev, [pid]: n }));
+    };
+
     const handleAddToCart = (product) => {
-        addToCart(product, 1);
+        const qty = getQty(product.product_id);
+        addToCart(product, qty);
+        // Reset qty input after adding
+        setQtyInputs(prev => ({ ...prev, [product.product_id]: 1 }));
     };
     // Modal & Form
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -366,12 +379,39 @@ const AllProducts = () => {
                             </button>
                         </div>
                     ) : (
-                        <button
-                            onClick={() => handleAddToCart(product)}
-                            className="w-full py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 text-xs font-bold bg-[#3462a6] hover:bg-[#2b528c] text-white"
-                        >
-                            Add to cart
-                        </button>
+                        <div className="space-y-2">
+                            {/* Qty stepper */}
+                            <div className="flex items-center gap-1.5 bg-slate-100 rounded-xl px-2 py-1">
+                                <button
+                                    onClick={() => setQty(product.product_id, getQty(product.product_id) - 1)}
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-indigo-600 transition-all"
+                                    aria-label="Decrease quantity"
+                                >
+                                    <Minus size={13} />
+                                </button>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={getQty(product.product_id)}
+                                    onChange={e => setQty(product.product_id, e.target.value)}
+                                    className="flex-1 text-center text-sm font-black text-slate-800 bg-transparent border-none outline-none w-0 min-w-0"
+                                    aria-label="Quantity"
+                                />
+                                <button
+                                    onClick={() => setQty(product.product_id, getQty(product.product_id) + 1)}
+                                    className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:bg-white hover:text-indigo-600 transition-all"
+                                    aria-label="Increase quantity"
+                                >
+                                    <Plus size={13} />
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => handleAddToCart(product)}
+                                className="w-full py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95 text-xs font-bold bg-[#3462a6] hover:bg-[#2b528c] text-white"
+                            >
+                                Add to cart
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
