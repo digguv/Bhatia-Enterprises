@@ -82,6 +82,11 @@ const FEATURED_PRODUCTS = [
         mrp: 25,
         category: 'Writing Instruments',
         image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=500&auto=format&fit=crop&q=60',
+        images: [
+            'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=500&auto=format&fit=crop&q=60',
+            'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=500&auto=format&fit=crop&q=60',
+            'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=500&auto=format&fit=crop&q=60'
+        ],
         hasVariants: true,
         variants: [
             { variant_id: 'v1', name: 'Yellow', price: 22, mrp: 25, inStock: true },
@@ -99,6 +104,10 @@ const FEATURED_PRODUCTS = [
         mrp: 25,
         category: 'Writing Instruments',
         image: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=500&auto=format&fit=crop&q=60',
+        images: [
+            'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=500&auto=format&fit=crop&q=60',
+            'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=500&auto=format&fit=crop&q=60'
+        ],
         hasVariants: false,
         variants: [],
         launchDate: new Date().toISOString().split('T')[0],
@@ -111,6 +120,11 @@ const FEATURED_PRODUCTS = [
         mrp: 225,
         category: 'Art & Drawing',
         image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=500&auto=format&fit=crop&q=60',
+        images: [
+            'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=500&auto=format&fit=crop&q=60',
+            'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=500&auto=format&fit=crop&q=60',
+            'https://images.unsplash.com/photo-1580493113155-75e1176b6a03?w=500&auto=format&fit=crop&q=60'
+        ],
         hasVariants: true,
         variants: [
             { variant_id: 'v11', name: '14 Shades Pack', price: 203, mrp: 225, inStock: true },
@@ -130,6 +144,8 @@ CATEGORY_DATA.forEach(({ category, items }) => {
         const hasVar = productCounter % 7 === 0;
         const basePrice = (Math.floor(Math.random() * 40) + 5) * 10;
         const mrp = Math.round(basePrice * 1.15);
+        const mainImg = `https://picsum.photos/seed/${id}/400/400`;
+        const hasMultiple = productCounter % 3 === 0;
 
         seedData.ri_products.push({
             product_id: id,
@@ -137,7 +153,12 @@ CATEGORY_DATA.forEach(({ category, items }) => {
             price: basePrice,
             mrp,
             category,
-            image: `https://picsum.photos/seed/${id}/400/400`,
+            image: mainImg,
+            images: hasMultiple ? [
+                mainImg,
+                `https://picsum.photos/seed/${id}_side/400/400`,
+                `https://picsum.photos/seed/${id}_detail/400/400`
+            ] : [mainImg],
             hasVariants: hasVar,
             variants: hasVar ? [
                 { variant_id: `${id}_v1`, name: 'Blue', price: basePrice, mrp, inStock: true },
@@ -152,7 +173,7 @@ CATEGORY_DATA.forEach(({ category, items }) => {
     });
 });
 
-const SEED_VERSION = 'stationery-v2';
+const SEED_VERSION = 'stationery-v3';
 
 export function seedLocalStorage() {
     const products = localStorage.getItem('ri_products');

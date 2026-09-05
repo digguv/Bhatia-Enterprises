@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LS } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { ShoppingBag, Star, Plus, Minus, X, Upload, Image as ImageIcon, Heart, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Star, Plus, Minus, X, Upload, Image as ImageIcon, Heart, ChevronDown, Trash2, Images } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import SelectVariantModal from '../components/SelectVariantModal';
+import ProductImageSlider from '../components/ProductImageSlider';
 
 const NewProducts = () => {
     const { user } = useAuth();
@@ -12,6 +13,7 @@ const NewProducts = () => {
     const { isWishlisted, toggleWishlist } = useWishlist();
     const [products, setProducts] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [imageUrlInput, setImageUrlInput] = useState('');
 
     // Variant selector modal for customer
     const [selectedProductForVariant, setSelectedProductForVariant] = useState(null);
@@ -24,6 +26,7 @@ const NewProducts = () => {
         mrp: '',
         category: 'Writing Instruments',
         image: '',
+        images: [],
         description: '',
         hasVariants: false,
         variants: []
@@ -43,15 +46,64 @@ const NewProducts = () => {
         addToCart(product, 1);
     };
 
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
+    const handleMultipleImageUpload = (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        files.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setFormData({ ...formData, image: reader.result });
+                setFormData(prev => {
+                    const currentImages = prev.images || [];
+                    const updated = [...currentImages, reader.result];
+                    return {
+                        ...prev,
+                        images: updated,
+                        image: updated[0] || ''
+                    };
+                });
             };
             reader.readAsDataURL(file);
-        }
+        });
+    };
+
+    const handleRemoveImage = (indexToRemove) => {
+        setFormData(prev => {
+            const updated = (prev.images || []).filter((_, idx) => idx !== indexToRemove);
+            return {
+                ...prev,
+                images: updated,
+                image: updated[0] || ''
+            };
+        });
+    };
+
+    const handleSetPrimaryImage = (indexToPrimary) => {
+        setFormData(prev => {
+            const list = [...(prev.images || [])];
+            if (indexToPrimary < 0 || indexToPrimary >= list.length) return prev;
+            const [selected] = list.splice(indexToPrimary, 1);
+            const updated = [selected, ...list];
+            return {
+                ...prev,
+                images: updated,
+                image: updated[0] || ''
+            };
+        });
+    };
+
+    const handleAddImageUrl = () => {
+        const url = imageUrlInput.trim();
+        if (!url) return;
+        setFormData(prev => {
+            const updated = [...(prev.images || []), url];
+            return {
+                ...prev,
+                images: updated,
+                image: updated[0] || ''
+            };
+        });
+        setImageUrlInput('');
     };
 
     const handleSubmit = (e) => {
@@ -67,13 +119,19 @@ const NewProducts = () => {
             }
         }
 
+        const finalImages = formData.images && formData.images.length > 0
+            ? formData.images
+            : (formData.image ? [formData.image] : ['https://placehold.co/400?text=' + encodeURIComponent(formData.name)]);
+        const primaryImage = finalImages[0];
+
         const newProduct = {
             product_id: 'P' + Date.now().toString().slice(-4),
             name: formData.name,
             price: finalPrice,
             mrp: finalMrp,
             category: formData.category,
-            image: formData.image || 'https://placehold.co/400?text=' + encodeURIComponent(formData.name),
+            image: primaryImage,
+            images: finalImages,
             launchDate: new Date().toISOString().split('T')[0],
             description: formData.description,
             hasVariants: !!formData.hasVariants,
@@ -87,7 +145,7 @@ const NewProducts = () => {
         loadProducts();
         window.dispatchEvent(new Event('ri_data_changed'));
         setIsModalOpen(false);
-        setFormData({ name: '', price: '', mrp: '', category: 'Writing Instruments', image: '', description: '', hasVariants: false, variants: [] });
+        setFormData({ name: '', price: '', mrp: '', category: 'Writing Instruments', image: '', images: [], description: '', hasVariants: false, variants: [] });
     };
 
     return (
@@ -122,21 +180,21 @@ const NewProducts = () => {
                         return (
                         <div key={p.product_id} className="glass-card group overflow-hidden flex flex-col p-4 border-none transition-all duration-500">
                             <div className="h-44 bg-slate-50 relative overflow-hidden rounded-2xl mb-4">
-                                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" onError={(e) => { e.target.src = 'https://placehold.co/400?text=New+Launch' }} />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                                    <p className="text-white text-[10px] font-bold line-clamp-2">{p.description}</p>
-                                </div>
-                                <span className="absolute top-3 left-3 bg-indigo-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-xl tracking-widest uppercase">New Launch</span>
+                                <ProductImageSlider
+                                    images={p.images && p.images.length > 0 ? p.images : [p.image]}
+                                    name={p.name}
+                                />
+                                <span className="absolute top-3 left-3 z-20 bg-indigo-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-xl tracking-widest uppercase pointer-events-none">New Launch</span>
                                 
                                 {discount && (
-                                    <span className="absolute top-12 left-3 bg-slate-900/90 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-md">
+                                    <span className="absolute top-12 left-3 z-20 bg-slate-900/90 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-md pointer-events-none">
                                         -{discount}%
                                     </span>
                                 )}
 
                                 <button
                                     onClick={() => toggleWishlist(p)}
-                                    className={`absolute top-3 right-3 p-2 rounded-xl backdrop-blur-xl shadow-sm transition-all ${isWishlisted(p.product_id) ? 'bg-indigo-600 text-white' : 'bg-white/90 text-slate-400 hover:text-indigo-600'}`}
+                                    className={`absolute top-3 right-3 z-20 p-2 rounded-xl backdrop-blur-xl shadow-sm transition-all ${isWishlisted(p.product_id) ? 'bg-indigo-600 text-white' : 'bg-white/90 text-slate-400 hover:text-indigo-600'}`}
                                     aria-label="Toggle wishlist"
                                 >
                                     <Heart size={14} fill={isWishlisted(p.product_id) ? 'currentColor' : 'none'} />
@@ -444,28 +502,92 @@ const NewProducts = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Visual Asset</label>
-                                <div className="border-2 border-dashed border-slate-100 rounded-[1.5rem] p-6 text-center hover:bg-slate-50 transition-all relative group bg-slate-50/50">
+                                <div className="flex items-center justify-between ml-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        Product Images (Auto-Slide)
+                                    </label>
+                                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                                        {formData.images?.length || 0} {formData.images?.length === 1 ? 'image' : 'images'}
+                                    </span>
+                                </div>
+
+                                {/* Uploaded images preview gallery */}
+                                {formData.images && formData.images.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2.5 mb-2">
+                                        {formData.images.map((img, idx) => (
+                                            <div key={idx} className="relative group/thumb aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
+                                                <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                                                
+                                                {/* Badge: Main image indicator */}
+                                                {idx === 0 ? (
+                                                    <span className="absolute top-1.5 left-1.5 bg-slate-900/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-sm">
+                                                        ★ Main
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSetPrimaryImage(idx)}
+                                                        className="absolute top-1.5 left-1.5 bg-white/90 hover:bg-white text-slate-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                                                        title="Set as main image"
+                                                    >
+                                                        Set Main
+                                                    </button>
+                                                )}
+
+                                                {/* Delete image button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveImage(idx)}
+                                                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-red-500/90 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity shadow-sm"
+                                                    title="Remove image"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Multi-file upload dropzone */}
+                                <div className="border-2 border-dashed border-slate-100 hover:border-indigo-300 rounded-[1.5rem] p-5 text-center hover:bg-slate-50 transition-all relative group bg-slate-50/50">
                                     <input
                                         type="file"
                                         accept="image/*"
-                                        onChange={handleImageUpload}
+                                        multiple
+                                        onChange={handleMultipleImageUpload}
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
-                                    {formData.image ? (
-                                        <div className="relative h-32 w-full">
-                                            <img src={formData.image} alt="Preview" className="h-full w-full object-contain mx-auto transition-transform group-hover:scale-105" />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 text-white font-black text-[10px] uppercase tracking-widest rounded-xl opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">Modify Asset</div>
+                                    <div className="flex flex-col items-center justify-center text-slate-400 py-1 pointer-events-none">
+                                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-2">
+                                            <Upload size={18} className="text-indigo-500" />
                                         </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center text-slate-400 py-2">
-                                            <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-3">
-                                                <Upload size={20} className="text-indigo-500" />
-                                            </div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest">Upload Specification Image</p>
-                                            <p className="text-[8px] font-bold text-slate-300 mt-1">PNG, JPG PREFERRED</p>
-                                        </div>
-                                    )}
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Upload Images (Select Multiple)</p>
+                                        <p className="text-[8px] font-bold text-slate-400 mt-0.5">Images will auto-slide on product card</p>
+                                    </div>
+                                </div>
+
+                                {/* Paste image URL option */}
+                                <div className="flex items-center gap-2 mt-2">
+                                    <input
+                                        type="url"
+                                        placeholder="Or paste an image URL..."
+                                        value={imageUrlInput}
+                                        onChange={e => setImageUrlInput(e.target.value)}
+                                        className="glass-input flex-1 text-xs py-2 px-3 font-medium text-slate-700"
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleAddImageUrl();
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddImageUrl}
+                                        className="px-3.5 py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded-xl text-xs font-black transition-all shrink-0"
+                                    >
+                                        + Add URL
+                                    </button>
                                 </div>
                             </div>
 

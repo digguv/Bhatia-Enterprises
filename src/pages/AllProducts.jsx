@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { LS } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { Plus, Minus, Edit3, Save, X, Upload, ShoppingCart, ArrowLeft, Heart, ChevronDown } from 'lucide-react';
+import { Plus, Minus, Edit3, Save, X, Upload, ShoppingCart, ArrowLeft, ArrowRight, Heart, ChevronDown, Trash2, Images } from 'lucide-react';
 import Hero from '../components/Hero';
 import { useWishlist } from '../context/WishlistContext';
 import SelectVariantModal from '../components/SelectVariantModal';
+import ProductImageSlider from '../components/ProductImageSlider';
 
 const AllProducts = () => {
     const { user } = useAuth();
@@ -13,6 +14,8 @@ const AllProducts = () => {
     const { isWishlisted, toggleWishlist } = useWishlist();
     const [products, setProducts] = useState([]);
     const [activeCategory, setActiveCategory] = useState(null);
+    const [visibleCategoryCount, setVisibleCategoryCount] = useState(1);
+    const loadMoreRef = useRef(null);
 
     // Variant selector modal for customer
     const [selectedProductForVariant, setSelectedProductForVariant] = useState(null);
@@ -24,6 +27,7 @@ const AllProducts = () => {
     // Modal & Form
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null); // If null, adding new. If set, editing.
+    const [imageUrlInput, setImageUrlInput] = useState('');
     const [formData, setFormData] = useState({
         name: '',
         price: '',
@@ -31,6 +35,7 @@ const AllProducts = () => {
         category: 'Writing Instruments',
         description: '',
         image: '',
+        images: [],
         stock: 100, // Default stock
         hasVariants: false,
         variants: []
@@ -39,6 +44,7 @@ const AllProducts = () => {
     const loadData = useCallback(() => {
         const p = LS.get('ri_products').map(item => ({
             ...item,
+            images: Array.isArray(item.images) && item.images.length > 0 ? item.images : (item.image ? [item.image] : []),
             stock: item.stock !== undefined ? item.stock : 100 // Ensure stock exists
         }));
         setProducts(p);
@@ -50,27 +56,82 @@ const AllProducts = () => {
         return () => window.removeEventListener('ri_data_changed', loadData);
     }, [loadData]);
 
-    const handleImageUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
+    const handleMultipleImageUpload = (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        files.forEach(file => {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setFormData({ ...formData, image: reader.result });
+                setFormData(prev => {
+                    const currentImages = prev.images || [];
+                    const updated = [...currentImages, reader.result];
+                    return {
+                        ...prev,
+                        images: updated,
+                        image: updated[0] || ''
+                    };
+                });
             };
             reader.readAsDataURL(file);
-        }
+        });
+    };
+
+    const handleRemoveImage = (indexToRemove) => {
+        setFormData(prev => {
+            const updated = (prev.images || []).filter((_, idx) => idx !== indexToRemove);
+            return {
+                ...prev,
+                images: updated,
+                image: updated[0] || ''
+            };
+        });
+    };
+
+    const handleSetPrimaryImage = (indexToPrimary) => {
+        setFormData(prev => {
+            const list = [...(prev.images || [])];
+            if (indexToPrimary < 0 || indexToPrimary >= list.length) return prev;
+            const [selected] = list.splice(indexToPrimary, 1);
+            const updated = [selected, ...list];
+            return {
+                ...prev,
+                images: updated,
+                image: updated[0] || ''
+            };
+        });
+    };
+
+    const handleAddImageUrl = () => {
+        const url = imageUrlInput.trim();
+        if (!url) return;
+        setFormData(prev => {
+            const updated = [...(prev.images || []), url];
+            return {
+                ...prev,
+                images: updated,
+                image: updated[0] || ''
+            };
+        });
+        setImageUrlInput('');
     };
 
     const handleOpenModal = (product = null) => {
+        setImageUrlInput('');
         if (product) {
             setEditingProduct(product);
+            const productImages = Array.isArray(product.images) && product.images.length > 0
+                ? [...product.images]
+                : (product.image ? [product.image] : []);
+
             setFormData({
                 name: product.name,
                 price: product.price,
                 mrp: product.mrp || '',
                 category: product.category,
                 description: product.description || '',
-                image: product.image,
+                image: productImages[0] || product.image || '',
+                images: productImages,
                 stock: product.stock !== undefined ? product.stock : 100,
                 hasVariants: !!product.hasVariants,
                 variants: product.variants ? JSON.parse(JSON.stringify(product.variants)) : []
@@ -84,6 +145,7 @@ const AllProducts = () => {
                 category: categories[0] || 'Writing Instruments',
                 description: '',
                 image: '',
+                images: [],
                 stock: 100,
                 hasVariants: false,
                 variants: []
@@ -106,8 +168,15 @@ const AllProducts = () => {
             }
         }
 
+        const finalImages = formData.images && formData.images.length > 0
+            ? formData.images
+            : (formData.image ? [formData.image] : []);
+        const primaryImage = finalImages[0] || formData.image || '';
+
         const productPayload = {
             ...formData,
+            image: primaryImage,
+            images: finalImages,
             price: finalPrice,
             mrp: finalMrp,
             stock: Number(formData.stock),
@@ -149,12 +218,57 @@ const AllProducts = () => {
 
     const categories = [...new Set(products.map(p => p.category))];
     const categoryThumb = (cat) => products.find(p => p.category === cat)?.image;
-    const categoryProducts = activeCategory ? products.filter(p => p.category === activeCategory) : [];
+    const productsByCategory = (cat) => products.filter(p => p.category === cat);
+
+    // Once a category is opened, keep it first and queue the remaining categories
+    // right after it so scrolling down keeps revealing more categories to explore.
+    const orderedCategories = activeCategory
+        ? [activeCategory, ...categories.filter(c => c !== activeCategory)]
+        : [];
 
     const openCategory = (cat) => {
         setActiveCategory(cat);
-        window.scrollTo({ top: 0 });
+        setVisibleCategoryCount(1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    // Infinite scroll & scroll detection: reveals the next category as the user scrolls down
+    useEffect(() => {
+        if (!activeCategory || visibleCategoryCount >= orderedCategories.length) return;
+
+        const checkAndLoadMore = () => {
+            const scrollPos = window.innerHeight + window.scrollY;
+            const threshold = document.documentElement.scrollHeight - 500;
+            if (scrollPos >= threshold) {
+                setVisibleCategoryCount(c => Math.min(c + 1, orderedCategories.length));
+            }
+        };
+
+        // If the initial content isn't tall enough to create a scrollbar, load another category so user can scroll
+        if (document.documentElement.scrollHeight <= window.innerHeight + 300) {
+            setVisibleCategoryCount(c => Math.min(c + 1, orderedCategories.length));
+        }
+
+        window.addEventListener('scroll', checkAndLoadMore, { passive: true });
+        window.addEventListener('resize', checkAndLoadMore, { passive: true });
+
+        const node = loadMoreRef.current;
+        let observer;
+        if (node) {
+            observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    setVisibleCategoryCount(c => Math.min(c + 1, orderedCategories.length));
+                }
+            }, { rootMargin: '600px' });
+            observer.observe(node);
+        }
+
+        return () => {
+            window.removeEventListener('scroll', checkAndLoadMore);
+            window.removeEventListener('resize', checkAndLoadMore);
+            if (observer) observer.disconnect();
+        };
+    }, [activeCategory, visibleCategoryCount, orderedCategories.length]);
 
     const renderProductCard = (product) => {
         const cartItem = cart?.find(i => i.product_id === product.product_id && !i.variant_id);
@@ -169,23 +283,21 @@ const AllProducts = () => {
         return (
         <div key={product.product_id} className="glass-card group overflow-hidden flex flex-col p-3 border-none transition-all duration-500 hover:-translate-y-1">
             <div className="relative h-44 bg-slate-50 overflow-hidden rounded-2xl mb-3">
-                <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    onError={(e) => { e.target.src = 'https://placehold.co/400?text=Product' }}
+                <ProductImageSlider
+                    images={product.images && product.images.length > 0 ? product.images : [product.image]}
+                    name={product.name}
                 />
                 
                 {/* Discount Badge */}
                 {discount && (
-                    <span className="absolute top-2 right-2 bg-slate-900/90 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
+                    <span className="absolute top-2 right-2 z-20 bg-slate-900/90 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md pointer-events-none">
                         -{discount}%
                     </span>
                 )}
 
                 <button
                     onClick={() => toggleWishlist(product)}
-                    className={`absolute top-2 left-2 p-2 rounded-xl backdrop-blur-xl shadow-sm transition-all ${isWishlisted(product.product_id) ? 'bg-indigo-600 text-white' : 'bg-white/90 text-slate-400 hover:text-indigo-600'}`}
+                    className={`absolute top-2 left-2 z-20 p-2 rounded-xl backdrop-blur-xl shadow-sm transition-all ${isWishlisted(product.product_id) ? 'bg-indigo-600 text-white' : 'bg-white/90 text-slate-400 hover:text-indigo-600'}`}
                     aria-label="Toggle wishlist"
                 >
                     <Heart size={14} fill={isWishlisted(product.product_id) ? 'currentColor' : 'none'} />
@@ -193,7 +305,7 @@ const AllProducts = () => {
                 {user?.role === 'admin' && (
                     <button
                         onClick={() => handleOpenModal(product)}
-                        className="absolute bottom-2 right-2 p-2.5 bg-white/90 backdrop-blur-xl rounded-xl text-slate-400 hover:text-indigo-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
+                        className="absolute bottom-2 right-2 z-20 p-2.5 bg-white/90 backdrop-blur-xl rounded-xl text-slate-400 hover:text-indigo-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
                     >
                         <Edit3 size={14} />
                     </button>
@@ -284,42 +396,159 @@ const AllProducts = () => {
                 )}
 
                 {activeCategory ? (
-                    <div className="space-y-4">
-                        <button
-                            onClick={() => { setActiveCategory(null); window.scrollTo({ top: 0 }); }}
-                            className="flex items-center gap-2 text-xs font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all"
-                        >
-                            <ArrowLeft size={14} /> All Categories
-                        </button>
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">{activeCategory}</h3>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{categoryProducts.length} Items</span>
+                    <div className="space-y-10">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60">
+                            <button
+                                onClick={() => { setActiveCategory(null); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-xs font-black text-slate-600 hover:text-indigo-600 uppercase tracking-widest transition-all shadow-sm w-fit"
+                            >
+                                <ArrowLeft size={14} /> All Categories
+                            </button>
+
+                            {/* Category pills for fast jumping */}
+                            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar py-1 max-w-full">
+                                {categories.map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => openCategory(cat)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                                            cat === activeCategory
+                                                ? 'bg-slate-900 text-white shadow-md'
+                                                : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
+                                        }`}
+                                    >
+                                        <span className={`w-1.5 h-1.5 rounded-full ${cat === activeCategory ? 'bg-indigo-400' : 'bg-slate-300'}`}></span>
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-                            {categoryProducts.map(renderProductCard)}
-                        </div>
+
+                        {orderedCategories.slice(0, visibleCategoryCount).map((cat, idx) => {
+                            const catProducts = productsByCategory(cat);
+                            return (
+                                <div key={cat} className="space-y-4 pt-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-slate-200 bg-sky-50 shrink-0">
+                                                <img
+                                                    src={categoryThumb(cat)}
+                                                    alt={cat}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => { e.target.src = 'https://placehold.co/100?text=' + cat }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">{cat}</h3>
+                                                    {idx === 0 && (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                            Selected
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{catProducts.length} Items</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                                        {catProducts.map(renderProductCard)}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {visibleCategoryCount < orderedCategories.length ? (
+                            <div ref={loadMoreRef} className="flex flex-col items-center justify-center py-10 gap-3">
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
+                                    Scroll down to explore <strong className="text-indigo-600">{orderedCategories[visibleCategoryCount]}</strong>
+                                </div>
+                                <button
+                                    onClick={() => setVisibleCategoryCount(c => Math.min(c + 1, orderedCategories.length))}
+                                    className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/50 text-slate-700 hover:text-indigo-600 text-xs font-black transition-all shadow-sm flex items-center gap-2"
+                                >
+                                    Load Next Category ({orderedCategories[visibleCategoryCount]})
+                                    <ChevronDown size={14} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-xs font-bold text-slate-400">
+                                You've explored all categories!
+                            </div>
+                        )}
                     </div>
                 ) : (
-                    <div>
-                        <h2 className="text-lg md:text-xl font-black text-slate-900 tracking-tight mb-4">Explore Our Full Range</h2>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-3 md:gap-4">
-                            {categories.map(cat => (
-                                <button
-                                    key={cat}
-                                    onClick={() => openCategory(cat)}
-                                    className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-lg hover:-translate-y-1 transition-all"
-                                >
-                                    <div className="w-full aspect-square rounded-2xl bg-sky-50 ring-1 ring-slate-100 overflow-hidden">
-                                        <img
-                                            src={categoryThumb(cat)}
-                                            alt={cat}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                            onError={(e) => { e.target.src = 'https://placehold.co/200?text=Item' }}
-                                        />
+                    <div className="space-y-12">
+                        {/* Explore Our Full Range Category Grid */}
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">Explore Our Full Range</h2>
+                                <span className="text-xs font-bold text-slate-400">{categories.length} Categories</span>
+                            </div>
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-3 md:gap-4">
+                                {categories.map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => openCategory(cat)}
+                                        className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-lg hover:-translate-y-1 transition-all text-left"
+                                    >
+                                        <div className="w-full aspect-square rounded-2xl bg-sky-50 ring-1 ring-slate-100 overflow-hidden">
+                                            <img
+                                                src={categoryThumb(cat)}
+                                                alt={cat}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                onError={(e) => { e.target.src = 'https://placehold.co/200?text=Item' }}
+                                            />
+                                        </div>
+                                        <span className="text-[10px] md:text-[11px] font-black text-slate-700 uppercase tracking-wide text-center leading-tight">{cat}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Under Categories: 5 Categories Products Showcase */}
+                        <div className="space-y-10 pt-4 border-t border-slate-200/50">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xl font-black text-slate-900 tracking-tight">Featured Categories</h2>
+                                    <p className="text-xs text-slate-400 font-medium">Explore top stationery essentials across our most popular categories</p>
+                                </div>
+                            </div>
+
+                            {categories.slice(0, 5).map(cat => {
+                                const catProducts = productsByCategory(cat);
+                                return (
+                                    <div key={cat} className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl overflow-hidden ring-1 ring-slate-200 bg-sky-50 shrink-0">
+                                                    <img
+                                                        src={categoryThumb(cat)}
+                                                        alt={cat}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => { e.target.src = 'https://placehold.co/100?text=' + cat }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg md:text-xl font-black text-slate-900 tracking-tight">{cat}</h3>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{catProducts.length} Items</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => openCategory(cat)}
+                                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-xs font-black transition-all shadow-sm group"
+                                            >
+                                                <span>View All</span>
+                                                <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                                            {catProducts.slice(0, 5).map(renderProductCard)}
+                                        </div>
                                     </div>
-                                    <span className="text-[10px] md:text-[11px] font-black text-slate-700 uppercase tracking-wide text-center leading-tight">{cat}</span>
-                                </button>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -568,26 +797,90 @@ const AllProducts = () => {
                             </div>
 
                             <div>
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Product Image</label>
-                                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:bg-slate-50 transition-colors relative">
+                                <div className="flex items-center justify-between mb-2 ml-1">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                                        Product Images (Auto-Slide)
+                                    </label>
+                                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                                        {formData.images?.length || 0} {formData.images?.length === 1 ? 'image' : 'images'}
+                                    </span>
+                                </div>
+
+                                {/* Uploaded images preview gallery */}
+                                {formData.images && formData.images.length > 0 && (
+                                    <div className="grid grid-cols-3 gap-2.5 mb-3">
+                                        {formData.images.map((img, idx) => (
+                                            <div key={idx} className="relative group/thumb aspect-square rounded-2xl overflow-hidden border border-slate-200 bg-slate-50">
+                                                <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                                                
+                                                {/* Badge: Main image indicator */}
+                                                {idx === 0 ? (
+                                                    <span className="absolute top-1.5 left-1.5 bg-slate-900/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-sm">
+                                                        ★ Main
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleSetPrimaryImage(idx)}
+                                                        className="absolute top-1.5 left-1.5 bg-white/90 hover:bg-white text-slate-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                                                        title="Set as main image"
+                                                    >
+                                                        Set Main
+                                                    </button>
+                                                )}
+
+                                                {/* Delete image button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveImage(idx)}
+                                                    className="absolute top-1.5 right-1.5 w-6 h-6 rounded-lg bg-red-500/90 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity shadow-sm"
+                                                    title="Remove image"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Upload file dropzone (multiple supported) */}
+                                <div className="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-5 text-center hover:bg-slate-50/60 transition-all relative">
                                     <input
                                         type="file"
                                         accept="image/*"
-                                        onChange={handleImageUpload}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        multiple
+                                        onChange={handleMultipleImageUpload}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
-                                    {formData.image ? (
-                                        <div className="relative h-40 w-full">
-                                            <img src={formData.image} alt="Preview" className="h-full w-full object-contain mx-auto rounded-xl" />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold opacity-0 hover:opacity-100 transition-opacity rounded-xl">Change Image</div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center text-slate-400 py-4">
-                                            <Upload size={40} className="mb-3 text-slate-300" />
-                                            <p className="font-bold text-sm text-slate-500">Drop your image here</p>
-                                            <p className="text-xs mt-1">PNG, JPG up to 5MB</p>
-                                        </div>
-                                    )}
+                                    <div className="flex flex-col items-center justify-center text-slate-400 pointer-events-none">
+                                        <Upload size={28} className="mb-2 text-indigo-500" />
+                                        <p className="font-black text-xs text-slate-700">Click or drag images to upload (Multiple supported)</p>
+                                        <p className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, WebP. Images will automatically slide on product card.</p>
+                                    </div>
+                                </div>
+
+                                {/* Paste image URL option */}
+                                <div className="flex items-center gap-2 mt-2.5">
+                                    <input
+                                        type="url"
+                                        placeholder="Or paste an image URL here..."
+                                        value={imageUrlInput}
+                                        onChange={e => setImageUrlInput(e.target.value)}
+                                        className="glass-input flex-1 text-xs py-2 px-3 font-medium text-slate-700"
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleAddImageUrl();
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddImageUrl}
+                                        className="px-4 py-2 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded-xl text-xs font-black transition-all shrink-0"
+                                    >
+                                        + Add URL
+                                    </button>
                                 </div>
                             </div>
 
