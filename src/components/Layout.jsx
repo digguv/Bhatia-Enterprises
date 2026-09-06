@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import CartBar from './CartBar';
-import { Menu, Bell, Search, ShoppingBag, ListOrdered, HelpCircle, LogOut, ChevronDown, User, Tag, CheckCircle, Inbox, MessageSquare, Heart, MessageCircle, Phone, Mail } from 'lucide-react';
-import { useLocation, Link } from 'react-router-dom';
+import { Menu, Bell, Search, ShoppingBag, ListOrdered, HelpCircle, LogOut, ChevronDown, User, Tag, CheckCircle, Inbox, MessageSquare, Heart, MessageCircle, Phone, Mail, Home } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -34,6 +34,10 @@ const Layout = ({ children }) => {
     const profileRef = useRef(null);
     const notifRef = useRef(null);
     const location = useLocation();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const [searchInput, setSearchInput] = useState('');
+    const searchDebounceRef = useRef(null);
     const { user, logout } = useAuth();
     const { cartCount, clearCart } = useCart();
     const { wishlistCount } = useWishlist();
@@ -72,6 +76,36 @@ const Layout = ({ children }) => {
         return () => window.removeEventListener('ri_data_changed', loadNotifications);
     }, [user]);
 
+    // Keep the search box in sync with the URL (e.g. browser back/forward, or landing on a search link)
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSearchInput(location.pathname === '/all-products' ? (searchParams.get('q') || '') : '');
+    }, [location.pathname, searchParams]);
+
+    const goToSearch = (value) => {
+        const q = value.trim();
+        navigate(q ? `/all-products?q=${encodeURIComponent(q)}` : '/all-products');
+    };
+
+    const handleSearchChange = (value) => {
+        setSearchInput(value);
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => goToSearch(value), 400);
+    };
+
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+            goToSearch(searchInput);
+            setMobileSearchOpen(false);
+        }
+    };
+
+    useEffect(() => () => {
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    }, []);
+
     const unreadCount = notifications.filter(n => !n.read).length;
 
     const handleNotificationClick = (notif) => {
@@ -105,6 +139,7 @@ const Layout = ({ children }) => {
             case '/feedback': return 'Feedback';
             case '/admin/pending': return 'Admin Console';
             case '/admin/feedback': return 'Customer Feedback';
+            case '/admin/accounts': return 'Manage Accounts';
             default: return 'Bhatia Enterprises';
         }
     };
@@ -125,10 +160,24 @@ const Layout = ({ children }) => {
                                 <Menu size={22} />
                             </button>
                         )}
-                        <div className="flex flex-col">
-                            <h2 className="text-xl md:text-2xl font-black bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent tracking-tight">{getPageTitle()}</h2>
-                            <p className="text-[10px] text-slate-400 font-bold hidden md:block uppercase tracking-wider">Bhatia Enterprises</p>
-                        </div>
+                        <Link
+                            to="/"
+                            aria-label="Go to Home"
+                            className="flex items-center gap-3 group"
+                        >
+                            <span className="p-2.5 rounded-2xl bg-white/80 group-hover:bg-indigo-600 text-slate-600 group-hover:text-white transition-all shadow-sm border border-white md:hidden">
+                                <Home size={20} />
+                            </span>
+                            <div className="hidden md:flex items-center gap-3">
+                                <span className="p-2.5 rounded-2xl bg-white/80 group-hover:bg-indigo-600 text-slate-600 group-hover:text-white transition-all shadow-sm border border-white">
+                                    <Home size={20} />
+                                </span>
+                                <div className="flex flex-col">
+                                    <h2 className="text-xl md:text-2xl font-black bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent tracking-tight">{getPageTitle()}</h2>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Bhatia Enterprises</p>
+                                </div>
+                            </div>
+                        </Link>
                     </div>
 
                     <div className="flex items-center gap-4 md:gap-6">
@@ -136,6 +185,9 @@ const Layout = ({ children }) => {
                             <Search size={16} className="text-slate-400" />
                             <input
                                 type="text"
+                                value={searchInput}
+                                onChange={e => handleSearchChange(e.target.value)}
+                                onKeyDown={handleSearchKeyDown}
                                 placeholder="Search products..."
                                 className="bg-transparent border-none outline-none text-xs w-full text-slate-700 placeholder:text-slate-400 font-bold"
                             />
@@ -293,6 +345,9 @@ const Layout = ({ children }) => {
                             <input
                                 type="text"
                                 autoFocus
+                                value={searchInput}
+                                onChange={e => handleSearchChange(e.target.value)}
+                                onKeyDown={handleSearchKeyDown}
                                 placeholder="Search products..."
                                 className="bg-transparent border-none outline-none text-xs w-full text-slate-700 placeholder:text-slate-400 font-bold"
                             />

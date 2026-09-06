@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { LS } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { Plus, Minus, Edit3, Save, X, Upload, ShoppingCart, ArrowLeft, ArrowRight, Heart, ChevronDown, Trash2, Images } from 'lucide-react';
+import { Plus, Minus, Edit3, Save, X, Upload, ShoppingCart, ArrowLeft, ArrowRight, Heart, ChevronDown, Trash2, Images, Link2, SearchX } from 'lucide-react';
 import Hero from '../components/Hero';
 import { useWishlist } from '../context/WishlistContext';
 import SelectVariantModal from '../components/SelectVariantModal';
 import ProductImageSlider from '../components/ProductImageSlider';
+import { fuzzySearchProducts } from '../utils/search';
 
 const AllProducts = () => {
     const { user } = useAuth();
     const { cart, addToCart, updateQty } = useCart();
     const { isWishlisted, toggleWishlist } = useWishlist();
+    const [searchParams] = useSearchParams();
+    const searchQuery = searchParams.get('q') || '';
     const [products, setProducts] = useState([]);
     const [activeCategory, setActiveCategory] = useState(null);
     const [visibleCategoryCount, setVisibleCategoryCount] = useState(1);
@@ -23,6 +27,30 @@ const AllProducts = () => {
 
     // Per-product qty input state (before adding to cart)
     const [qtyInputs, setQtyInputs] = useState({});
+
+    // Products mentioned by name in another product's description
+    const [highlightedProductId, setHighlightedProductId] = useState(null);
+
+    const getReferencedProducts = (product) => {
+        if (!product.description) return [];
+        const desc = product.description.toLowerCase();
+        return products.filter(other => (
+            other.product_id !== product.product_id &&
+            other.name &&
+            other.name.trim().length > 2 &&
+            desc.includes(other.name.trim().toLowerCase())
+        )).slice(0, 4);
+    };
+
+    const handleReferenceClick = (refProduct) => {
+        setActiveCategory(refProduct.category);
+        setVisibleCategoryCount(1);
+        setHighlightedProductId(refProduct.product_id);
+        setTimeout(() => {
+            document.getElementById(`product-${refProduct.product_id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+        setTimeout(() => setHighlightedProductId(null), 2500);
+    };
 
     const getQty = (pid) => Math.max(1, Number(qtyInputs[pid]) || 1);
 
@@ -64,6 +92,7 @@ const AllProducts = () => {
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadData();
         window.addEventListener('ri_data_changed', loadData);
         return () => window.removeEventListener('ri_data_changed', loadData);
@@ -232,6 +261,7 @@ const AllProducts = () => {
     const categories = [...new Set(products.map(p => p.category))];
     const categoryThumb = (cat) => products.find(p => p.category === cat)?.image;
     const productsByCategory = (cat) => products.filter(p => p.category === cat);
+    const searchResults = searchQuery ? fuzzySearchProducts(products, searchQuery) : null;
 
     // Once a category is opened, keep it first and queue the remaining categories
     // right after it so scrolling down keeps revealing more categories to explore.
@@ -259,6 +289,7 @@ const AllProducts = () => {
 
         // If the initial content isn't tall enough to create a scrollbar, load another category so user can scroll
         if (document.documentElement.scrollHeight <= window.innerHeight + 300) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setVisibleCategoryCount(c => Math.min(c + 1, orderedCategories.length));
         }
 
@@ -293,8 +324,14 @@ const AllProducts = () => {
         // Check if any variant of this product is in the cart
         const variantsInCartCount = cart?.filter(i => i.product_id === product.product_id).reduce((sum, i) => sum + i.qty, 0) || 0;
 
+        const referencedProducts = getReferencedProducts(product);
+
         return (
-        <div key={product.product_id} className="glass-card group overflow-hidden flex flex-col p-3 border-none transition-all duration-500 hover:-translate-y-1">
+        <div
+            key={product.product_id}
+            id={`product-${product.product_id}`}
+            className={`glass-card group overflow-hidden flex flex-col p-3 border-none transition-all duration-500 hover:-translate-y-1 ${highlightedProductId === product.product_id ? 'ring-4 ring-indigo-400 ring-offset-2' : ''}`}
+        >
             <div className="relative h-44 bg-slate-50 overflow-hidden rounded-2xl mb-3">
                 <ProductImageSlider
                     images={product.images && product.images.length > 0 ? product.images : [product.image]}
@@ -343,6 +380,23 @@ const AllProducts = () => {
                             Rs. {product.price}
                         </span>
                     </div>
+
+                    {referencedProducts.length > 0 && (
+                        <div className="flex flex-col gap-1">
+                            {referencedProducts.map(ref => (
+                                <button
+                                    key={ref.product_id}
+                                    type="button"
+                                    onClick={() => handleReferenceClick(ref)}
+                                    title={ref.name}
+                                    className="flex items-center gap-1 text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest transition-all"
+                                >
+                                    <Link2 size={11} />
+                                    View Reference: <span className="truncate normal-case font-bold">{ref.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {hasVariants ? (
                         <button
@@ -422,9 +476,9 @@ const AllProducts = () => {
     return (
         <>
             <div className="space-y-6 animate-fade-in-up pb-10">
-                {!activeCategory && <Hero name={user?.name} />}
+                {!activeCategory && !searchResults && <Hero name={user?.name} />}
 
-                {!activeCategory && user?.role === 'admin' && (
+                {!activeCategory && !searchResults && user?.role === 'admin' && (
                     <div className="flex justify-end">
                         <button
                             onClick={() => handleOpenModal()}
@@ -435,7 +489,28 @@ const AllProducts = () => {
                     </div>
                 )}
 
-                {activeCategory ? (
+                {searchResults ? (
+                    <div className="space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/60">
+                            <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                                Search Results for <span className="text-indigo-600">&ldquo;{searchQuery}&rdquo;</span>
+                            </h3>
+                            <span className="text-xs font-bold text-slate-400">{searchResults.length} {searchResults.length === 1 ? 'item' : 'items'} found</span>
+                        </div>
+
+                        {searchResults.length === 0 ? (
+                            <div className="text-center py-20 bg-white/50 rounded-3xl border border-dashed border-slate-300">
+                                <SearchX className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                                <p className="text-slate-500 font-black uppercase tracking-widest text-sm">Record Not Found</p>
+                                <p className="text-slate-400 text-xs mt-1">No products match &ldquo;{searchQuery}&rdquo;. Try a different search term.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                                {searchResults.map(renderProductCard)}
+                            </div>
+                        )}
+                    </div>
+                ) : activeCategory ? (
                     <div className="space-y-10">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/60">
                             <button

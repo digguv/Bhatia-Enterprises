@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { LS } from '../utils/LSHelpers';
+import { LS, createUserAccount } from '../utils/LSHelpers';
 
 const AuthContext = createContext();
 
@@ -17,6 +17,16 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, []);
 
+    // If admin verifies/deactivates this account from another tab (or this one), reflect it live.
+    useEffect(() => {
+        const syncSession = () => {
+            const storedUser = localStorage.getItem('currentUser');
+            setUser(storedUser ? JSON.parse(storedUser) : null);
+        };
+        window.addEventListener('ri_data_changed', syncSession);
+        return () => window.removeEventListener('ri_data_changed', syncSession);
+    }, []);
+
     const login = (username, password) => {
         const users = LS.get('ri_users');
         // Check against id (username) and password
@@ -32,13 +42,23 @@ export const AuthProvider = ({ children }) => {
         return false;
     };
 
+    const signup = ({ id, name, mobile, email, password }) => {
+        const result = createUserAccount({ id, name, mobile, email, password });
+        if (result.success) {
+            const { password: _pw, ...userWithoutPass } = result.user;
+            setUser(userWithoutPass);
+            localStorage.setItem('currentUser', JSON.stringify(userWithoutPass));
+        }
+        return result;
+    };
+
     const logout = () => {
         setUser(null);
         localStorage.removeItem('currentUser');
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
             {!loading && children}
         </AuthContext.Provider>
     );

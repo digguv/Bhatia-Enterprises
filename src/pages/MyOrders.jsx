@@ -27,6 +27,7 @@ const MyOrders = () => {
     }, [user]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadOrders();
         window.addEventListener('ri_data_changed', loadOrders);
         return () => window.removeEventListener('ri_data_changed', loadOrders);

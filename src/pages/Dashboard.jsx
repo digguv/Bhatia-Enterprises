@@ -3,7 +3,7 @@ import { LS } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
 import { TrendingUp, IndianRupee, Package, ShoppingBag, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -33,6 +33,7 @@ const Dashboard = () => {
     }, [user]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadData();
         window.addEventListener('ri_data_changed', loadData);
         return () => window.removeEventListener('ri_data_changed', loadData);

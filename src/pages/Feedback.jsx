@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { createFeedback, getCustomerProfile } from '../utils/LSHelpers';
-import { Star, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
+import { Star, MessageSquare, Send, CheckCircle2, Truck, Package, CreditCard, Headphones, MoreHorizontal } from 'lucide-react';
+
+const FEEDBACK_CATEGORIES = [
+    { value: 'Delivery', icon: Truck },
+    { value: 'Products', icon: Package },
+    { value: 'Payments', icon: CreditCard },
+    { value: 'Support', icon: Headphones },
+    { value: 'Other', icon: MoreHorizontal },
+];
 
 const Feedback = () => {
     const { user } = useAuth();
@@ -9,13 +17,14 @@ const Feedback = () => {
 
     const [name, setName] = useState(profile?.fullName || user?.name || '');
     const [contact, setContact] = useState(profile?.mobile || profile?.email || '');
+    const [category, setCategory] = useState('');
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [message, setMessage] = useState('');
     const [touched, setTouched] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
-    const isValid = name.trim() && rating > 0 && message.trim();
+    const isValid = name.trim() && category && rating > 0 && message.trim();
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -28,6 +37,7 @@ const Feedback = () => {
             customer_id: user.id,
             name: name.trim(),
             contact: contact.trim(),
+            category,
             rating,
             message: message.trim(),
         });
@@ -36,6 +46,7 @@ const Feedback = () => {
     };
 
     const handleAnother = () => {
+        setCategory('');
         setRating(0);
         setMessage('');
         setTouched(false);
@@ -92,6 +103,30 @@ const Feedback = () => {
                         onChange={e => setContact(e.target.value)}
                         placeholder="Optional"
                     />
+                </div>
+
+                <div>
+                    <label className="text-[11px] font-bold text-slate-500 block mb-2">
+                        What is this feedback about? <span className="text-indigo-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                        {FEEDBACK_CATEGORIES.map(({ value, icon: Icon }) => ( // eslint-disable-line no-unused-vars
+                            <button
+                                key={value}
+                                type="button"
+                                onClick={() => setCategory(value)}
+                                className={`flex flex-col items-center justify-center gap-1 py-3 rounded-xl border text-[11px] font-bold transition-all ${
+                                    category === value
+                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
+                                        : 'bg-white border-slate-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600'
+                                }`}
+                            >
+                                <Icon size={18} />
+                                {value}
+                            </button>
+                        ))}
+                    </div>
+                    {touched && !category && <p className="text-[10px] text-indigo-500 font-bold mt-1">Please select a category</p>}
                 </div>
 
                 <div>

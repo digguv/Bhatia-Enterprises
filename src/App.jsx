@@ -5,18 +5,21 @@ import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import MyOrders from './pages/MyOrders';
 import Schemes from './pages/Schemes';
 import Complaints from './pages/Complaints';
 import NewProducts from './pages/NewProducts';
 import AdminPending from './pages/AdminPending';
+import AdminAccounts from './pages/AdminAccounts';
 import AllProducts from './pages/AllProducts';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import Feedback from './pages/Feedback';
 import AdminFeedback from './pages/AdminFeedback';
 import Wishlist from './pages/Wishlist';
+import AccountStatusScreen from './components/AccountStatusScreen';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -35,6 +38,9 @@ const ProtectedRoute = ({ children }) => {
     </div>
   );
   if (!user) return <Navigate to="/login" />;
+  if (user.role !== 'admin' && (user.status === 'pending' || user.status === 'deactivated')) {
+    return <AccountStatusScreen status={user.status} />;
+  }
   return <Layout>{children}</Layout>;
 };
 
@@ -52,6 +58,7 @@ function App() {
             <ScrollToTop />
             <Routes>
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="/" element={<ProtectedRoute><HomeRoute /></ProtectedRoute>} />
               <Route path="/orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
               <Route path="/schemes" element={<ProtectedRoute><Schemes /></ProtectedRoute>} />
@@ -64,6 +71,7 @@ function App() {
               <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
               <Route path="/admin/pending" element={<ProtectedRoute><AdminPending /></ProtectedRoute>} />
               <Route path="/admin/feedback" element={<ProtectedRoute><AdminFeedback /></ProtectedRoute>} />
+              <Route path="/admin/accounts" element={<ProtectedRoute><AdminAccounts /></ProtectedRoute>} />
             </Routes>
           </WishlistProvider>
         </CartProvider>

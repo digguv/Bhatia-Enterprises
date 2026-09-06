@@ -12,7 +12,7 @@ const formatAddress = (a) => [a.houseNo, a.street, a.landmark, a.city, a.state, 
 
 const Profile = () => {
     const { user } = useAuth();
-    const [contact, setContact] = useState({ fullName: '', mobile: '', email: '', whatsapp: '' });
+    const [contact, setContact] = useState({ fullName: '', mobile: '', email: '', whatsapp: '', gstNumber: '' });
     const [addresses, setAddresses] = useState([]);
     const [defaultAddressId, setDefaultAddressIdState] = useState(null);
     const [savedFlash, setSavedFlash] = useState(false);
@@ -29,6 +29,7 @@ const Profile = () => {
             mobile: profile?.mobile || '',
             email: profile?.email || '',
             whatsapp: profile?.whatsapp || '',
+            gstNumber: profile?.gstNumber || '',
         });
         setAddresses(profile?.addresses || []);
         setDefaultAddressIdState(profile?.defaultAddressId || null);
@@ -103,6 +104,16 @@ const Profile = () => {
                     <div>
                         <label className="text-[11px] font-bold text-slate-500 block mb-1">WhatsApp Number</label>
                         <input className="glass-input w-full text-sm" value={contact.whatsapp} onChange={e => setContact({ ...contact, whatsapp: e.target.value })} />
+                    </div>
+                    <div>
+                        <label className="text-[11px] font-bold text-slate-500 block mb-1">GST Number <span className="text-slate-300 normal-case">(Optional)</span></label>
+                        <input
+                            className="glass-input w-full text-sm uppercase"
+                            value={contact.gstNumber}
+                            onChange={e => setContact({ ...contact, gstNumber: e.target.value.toUpperCase() })}
+                            placeholder="e.g. 22AAAAA0000A1Z5"
+                            maxLength={15}
+                        />
                     </div>
                 </div>
                 <button

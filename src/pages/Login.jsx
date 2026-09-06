@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Lock, ArrowRight } from 'lucide-react';
 
@@ -98,6 +98,12 @@ const Login = () => {
                             Node USER
                         </button>
                     </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-slate-100 text-center">
+                    <Link to="/signup" className="text-[11px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-all">
+                        New here? <span className="text-indigo-600">Create Account</span>
+                    </Link>
                 </div>
             </div>
 

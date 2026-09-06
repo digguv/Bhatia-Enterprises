@@ -24,6 +24,7 @@ const Complaints = () => {
     }, [user]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadData();
         window.addEventListener('ri_data_changed', loadData);
         return () => window.removeEventListener('ri_data_changed', loadData);

@@ -6,8 +6,8 @@ export const LS = {
 
 export const seedData = {
     ri_users: [
-        { id: "admin", name: "Admin", role: "admin", password: "admin123" },
-        { id: "user", name: "Mr Customer", role: "customer", password: "user123" }
+        { id: "admin", name: "Admin", role: "admin", password: "admin123", status: "active" },
+        { id: "user", name: "Mr Customer", role: "customer", password: "user123", status: "active" }
     ],
     ri_products: [],
     ri_schemes: [
@@ -236,6 +236,67 @@ export function markAllNotificationsRead(userId) {
         LS.set('ri_notifications', list);
         notifyDataChange();
     }
+}
+
+export function createUserAccount({ id, name, mobile, email, password }) {
+    const users = LS.get('ri_users');
+    if (users.some(u => u.id.toLowerCase() === id.toLowerCase())) {
+        return { success: false, error: 'This username is already taken.' };
+    }
+    const newUser = {
+        id,
+        name,
+        mobile,
+        email,
+        password,
+        role: 'customer',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+    };
+    users.push(newUser);
+    LS.set('ri_users', users);
+    notifyDataChange();
+
+    addNotification({
+        userId: 'admin',
+        title: 'New Account Signup',
+        message: `${name} (@${id}) has created an account and is awaiting verification.`,
+        type: 'account',
+    });
+
+    return { success: true, user: newUser };
+}
+
+export function updateUserStatus(userId, status) {
+    const users = LS.get('ri_users');
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) return;
+    users[idx].status = status;
+    LS.set('ri_users', users);
+
+    // Keep this device's active session (if it belongs to the affected user) in sync immediately
+    const stored = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (stored && stored.id === userId) {
+        localStorage.setItem('currentUser', JSON.stringify({ ...stored, status }));
+    }
+
+    if (status === 'active') {
+        addNotification({
+            userId,
+            title: 'Account Verified',
+            message: 'Your account has been verified by admin. You can now explore products and place orders.',
+            type: 'account',
+        });
+    } else if (status === 'deactivated') {
+        addNotification({
+            userId,
+            title: 'Account Deactivated',
+            message: 'Your account has been deactivated by admin. Contact support for help.',
+            type: 'account',
+        });
+    }
+
+    notifyDataChange();
 }
 
 export function getCustomerProfile(userId) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ListOrdered, Tag, Package2, LogOut, X, Star, ShieldCheck, HelpCircle, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, ListOrdered, Tag, Package2, LogOut, X, Star, ShieldCheck, HelpCircle, MessageSquare, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { getCustomerProfile } from '../utils/LSHelpers';
@@ -32,6 +32,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
         { icon: ShieldCheck, label: 'Admin Pending', path: '/admin/pending' },
+        { icon: Users, label: 'Manage Accounts', path: '/admin/accounts' },
         { icon: ListOrdered, label: 'All Orders', path: '/orders' },
         { icon: Package2, label: 'All Products', path: '/all-products' },
         { icon: Tag, label: 'Schemes', path: '/schemes' },

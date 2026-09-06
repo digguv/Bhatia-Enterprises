@@ -47,8 +47,11 @@ const AdminFeedback = () => {
                     <div key={f.feedback_id} className="glass-card p-6">
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                             <div>
-                                <div className="flex items-center gap-3 mb-1.5">
+                                <div className="flex items-center gap-3 mb-1.5 flex-wrap">
                                     <span className="font-black text-slate-900">{f.name}</span>
+                                    {f.category && (
+                                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">{f.category}</span>
+                                    )}
                                     {f.contact && (
                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-full border border-slate-100">{f.contact}</span>
                                     )}
