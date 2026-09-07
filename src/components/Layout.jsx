@@ -6,7 +6,8 @@ import { useLocation, useNavigate, useSearchParams, Link } from 'react-router-do
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { getCustomerProfile, getNotificationsForUser, markNotificationRead, markAllNotificationsRead } from '../utils/LSHelpers';
+import { LS, getCustomerProfile, getNotificationsForUser, markNotificationRead, markAllNotificationsRead } from '../utils/LSHelpers';
+import { fuzzySearchProducts } from '../utils/search';
 
 const timeAgo = (iso) => {
     const diffMs = Date.now() - new Date(iso).getTime();
@@ -37,12 +38,14 @@ const Layout = ({ children }) => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [searchInput, setSearchInput] = useState('');
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
     const searchDebounceRef = useRef(null);
     const { user, logout } = useAuth();
     const { cartCount, clearCart } = useCart();
     const { wishlistCount } = useWishlist();
     const [displayName, setDisplayName] = useState(user?.name || '');
     const [notifications, setNotifications] = useState([]);
+    const [products, setProducts] = useState([]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -76,6 +79,14 @@ const Layout = ({ children }) => {
         return () => window.removeEventListener('ri_data_changed', loadNotifications);
     }, [user]);
 
+    // Products for search suggestions (typeahead)
+    useEffect(() => {
+        const loadProducts = () => setProducts(LS.get('ri_products'));
+        loadProducts();
+        window.addEventListener('ri_data_changed', loadProducts);
+        return () => window.removeEventListener('ri_data_changed', loadProducts);
+    }, []);
+
     // Keep the search box in sync with the URL (e.g. browser back/forward, or landing on a search link)
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -98,6 +109,7 @@ const Layout = ({ children }) => {
             e.preventDefault();
             if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
             goToSearch(searchInput);
+            setIsSearchFocused(false);
             setMobileSearchOpen(false);
         }
     };
@@ -105,6 +117,52 @@ const Layout = ({ children }) => {
     useEffect(() => () => {
         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     }, []);
+
+    const searchSuggestions = isSearchFocused && searchInput.trim()
+        ? fuzzySearchProducts(products, searchInput).slice(0, 6)
+        : [];
+
+    const handleSuggestionClick = (product) => {
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        setIsSearchFocused(false);
+        setMobileSearchOpen(false);
+        navigate(`/product/${product.product_id}`);
+    };
+
+    const highlightMatch = (name, query) => {
+        const idx = name.toLowerCase().indexOf(query.trim().toLowerCase());
+        if (idx === -1) return <span>{name}</span>;
+        return (
+            <span>
+                {name.slice(0, idx)}
+                <span className="font-black text-slate-900">{name.slice(idx, idx + query.trim().length)}</span>
+                {name.slice(idx + query.trim().length)}
+            </span>
+        );
+    };
+
+    const renderSuggestionsDropdown = () => (
+        <div
+            onMouseDown={(e) => e.preventDefault()}
+            className="absolute top-full left-0 mt-2 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-40 animate-fade-in-up"
+        >
+            {searchSuggestions.map(p => (
+                <button
+                    key={p.product_id}
+                    onClick={() => handleSuggestionClick(p)}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 text-left transition-all border-b border-slate-50 last:border-b-0"
+                >
+                    <img
+                        src={p.image}
+                        alt={p.name}
+                        className="w-8 h-8 rounded-lg object-cover bg-slate-100 shrink-0"
+                        onError={(e) => { e.target.src = 'https://placehold.co/50?text=%20'; }}
+                    />
+                    <span className="text-xs font-semibold text-slate-500 truncate">{highlightMatch(p.name, searchInput)}</span>
+                </button>
+            ))}
+        </div>
+    );
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -127,6 +185,7 @@ const Layout = ({ children }) => {
     ];
 
     const getPageTitle = () => {
+        if (location.pathname.startsWith('/product/')) return 'Product Details';
         switch (location.pathname) {
             case '/': return user?.role === 'admin' ? 'Dashboard' : 'All Products';
             case '/orders': return 'Order History';
@@ -173,24 +232,29 @@ const Layout = ({ children }) => {
                                     <Home size={20} />
                                 </span>
                                 <div className="flex flex-col">
-                                    <h2 className="text-xl md:text-2xl font-black bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent tracking-tight">{getPageTitle()}</h2>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Bhatia Enterprises</p>
+                                    <h2 className="text-xl md:text-2xl font-black bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-transparent tracking-tight">Bhatia Enterprises</h2>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{getPageTitle()}</p>
                                 </div>
                             </div>
                         </Link>
                     </div>
 
                     <div className="flex items-center gap-4 md:gap-6">
-                        <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-white/50 rounded-2xl border border-white/60 focus-within:bg-white/80 focus-within:border-indigo-200 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all w-64 shadow-inner">
-                            <Search size={16} className="text-slate-400" />
-                            <input
-                                type="text"
-                                value={searchInput}
-                                onChange={e => handleSearchChange(e.target.value)}
-                                onKeyDown={handleSearchKeyDown}
-                                placeholder="Search products..."
-                                className="bg-transparent border-none outline-none text-xs w-full text-slate-700 placeholder:text-slate-400 font-bold"
-                            />
+                        <div className="hidden lg:block relative w-64">
+                            <div className="flex items-center gap-3 px-4 py-2 bg-white/50 rounded-2xl border border-white/60 focus-within:bg-white/80 focus-within:border-indigo-200 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all shadow-inner">
+                                <Search size={16} className="text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={searchInput}
+                                    onChange={e => handleSearchChange(e.target.value)}
+                                    onKeyDown={handleSearchKeyDown}
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setIsSearchFocused(false)}
+                                    placeholder="Search products..."
+                                    className="bg-transparent border-none outline-none text-xs w-full text-slate-700 placeholder:text-slate-400 font-bold"
+                                />
+                            </div>
+                            {searchSuggestions.length > 0 && renderSuggestionsDropdown()}
                         </div>
 
                         <div className="flex items-center gap-3">
@@ -340,17 +404,22 @@ const Layout = ({ children }) => {
 
                 {mobileSearchOpen && (
                     <div className="lg:hidden px-4 pb-3 pt-2 bg-white/40 backdrop-blur-3xl border-b border-white/20 sticky top-16 z-20">
-                        <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                            <Search size={16} className="text-slate-400" />
-                            <input
-                                type="text"
-                                autoFocus
-                                value={searchInput}
-                                onChange={e => handleSearchChange(e.target.value)}
-                                onKeyDown={handleSearchKeyDown}
-                                placeholder="Search products..."
-                                className="bg-transparent border-none outline-none text-xs w-full text-slate-700 placeholder:text-slate-400 font-bold"
-                            />
+                        <div className="relative">
+                            <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                                <Search size={16} className="text-slate-400" />
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    value={searchInput}
+                                    onChange={e => handleSearchChange(e.target.value)}
+                                    onKeyDown={handleSearchKeyDown}
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setIsSearchFocused(false)}
+                                    placeholder="Search products..."
+                                    className="bg-transparent border-none outline-none text-xs w-full text-slate-700 placeholder:text-slate-400 font-bold"
+                                />
+                            </div>
+                            {searchSuggestions.length > 0 && renderSuggestionsDropdown()}
                         </div>
                     </div>
                 )}

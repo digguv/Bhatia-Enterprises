@@ -42,8 +42,8 @@ export const AuthProvider = ({ children }) => {
         return false;
     };
 
-    const signup = ({ id, name, mobile, email, password }) => {
-        const result = createUserAccount({ id, name, mobile, email, password });
+    const signup = ({ id, name, mobile, email, password, gstNumber }) => {
+        const result = createUserAccount({ id, name, mobile, email, password, gstNumber });
         if (result.success) {
             const { password: _pw, ...userWithoutPass } = result.user;
             setUser(userWithoutPass);

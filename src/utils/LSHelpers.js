@@ -238,7 +238,7 @@ export function markAllNotificationsRead(userId) {
     }
 }
 
-export function createUserAccount({ id, name, mobile, email, password }) {
+export function createUserAccount({ id, name, mobile, email, password, gstNumber }) {
     const users = LS.get('ri_users');
     if (users.some(u => u.id.toLowerCase() === id.toLowerCase())) {
         return { success: false, error: 'This username is already taken.' };
@@ -255,6 +255,10 @@ export function createUserAccount({ id, name, mobile, email, password }) {
     };
     users.push(newUser);
     LS.set('ri_users', users);
+
+    // Seed the customer profile so their contact details (including GST) are ready to use immediately
+    saveContactInfo(id, { fullName: name, mobile, email, gstNumber: gstNumber || '' });
+
     notifyDataChange();
 
     addNotification({

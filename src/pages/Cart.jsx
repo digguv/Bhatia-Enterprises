@@ -29,7 +29,7 @@ const Cart = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    const [contact, setContact] = useState({ fullName: '', mobile: '', email: '', whatsapp: '' });
+    const [contact, setContact] = useState({ fullName: '', mobile: '', email: '', gstNumber: '' });
     const [addresses, setAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState(null);
 
@@ -53,7 +53,7 @@ const Cart = () => {
             fullName: profile?.fullName || user.name || '',
             mobile: profile?.mobile || '',
             email: profile?.email || '',
-            whatsapp: profile?.whatsapp || '',
+            gstNumber: profile?.gstNumber || '',
         });
         const savedAddresses = profile?.addresses || [];
         setAddresses(savedAddresses);
@@ -115,7 +115,7 @@ const Cart = () => {
                 customerName: contact.fullName,
                 mobile: contact.mobile,
                 email: contact.email,
-                whatsapp: contact.whatsapp,
+                gstNumber: contact.gstNumber,
                 paymentType,
                 scheme_id: null,
                 status: 'PENDING',
@@ -215,8 +215,14 @@ const Cart = () => {
                                 <Field label="Email Address">
                                     <input type="email" className={inputClass} value={contact.email} onChange={e => setContact({ ...contact, email: e.target.value })} />
                                 </Field>
-                                <Field label="WhatsApp Number">
-                                    <input className={inputClass} value={contact.whatsapp} onChange={e => setContact({ ...contact, whatsapp: e.target.value })} />
+                                <Field label="GST Number">
+                                    <input
+                                        className={`${inputClass} uppercase`}
+                                        value={contact.gstNumber}
+                                        onChange={e => setContact({ ...contact, gstNumber: e.target.value.toUpperCase() })}
+                                        placeholder="Optional — e.g. 22AAAAA0000A1Z5"
+                                        maxLength={15}
+                                    />
                                 </Field>
                             </div>
                         </div>

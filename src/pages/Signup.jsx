@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, User, Lock, Phone, Mail, ArrowRight } from 'lucide-react';
+import { UserPlus, User, Lock, Phone, Mail, FileText, ArrowRight } from 'lucide-react';
 
 const Signup = () => {
     const [name, setName] = useState('');
     const [username, setUsername] = useState('');
     const [mobile, setMobile] = useState('');
     const [email, setEmail] = useState('');
+    const [gstNumber, setGstNumber] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
@@ -37,7 +38,7 @@ const Signup = () => {
             return;
         }
 
-        const result = signup({ id: cleanUsername, name: name.trim(), mobile: mobile.trim(), email: email.trim(), password });
+        const result = signup({ id: cleanUsername, name: name.trim(), mobile: mobile.trim(), email: email.trim(), password, gstNumber: gstNumber.trim().toUpperCase() });
         if (result.success) {
             navigate('/');
         } else {
@@ -114,6 +115,21 @@ const Signup = () => {
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="w-full bg-white/40 border-2 border-slate-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 font-bold text-sm text-slate-700"
                                 placeholder="you@example.com"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">GST Number <span className="normal-case text-slate-300">(Optional)</span></label>
+                        <div className="relative group">
+                            <FileText size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-all" />
+                            <input
+                                type="text"
+                                value={gstNumber}
+                                onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                                className="w-full bg-white/40 border-2 border-slate-100 rounded-xl py-2.5 pl-10 pr-4 focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 font-bold text-sm text-slate-700 uppercase"
+                                placeholder="e.g. 22AAAAA0000A1Z5"
+                                maxLength={15}
                             />
                         </div>
                     </div>

@@ -14,6 +14,7 @@ import NewProducts from './pages/NewProducts';
 import AdminPending from './pages/AdminPending';
 import AdminAccounts from './pages/AdminAccounts';
 import AllProducts from './pages/AllProducts';
+import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Profile from './pages/Profile';
 import Feedback from './pages/Feedback';
@@ -65,6 +66,7 @@ function App() {
               <Route path="/complaints" element={<ProtectedRoute><Complaints /></ProtectedRoute>} />
               <Route path="/new-products" element={<ProtectedRoute><NewProducts /></ProtectedRoute>} />
               <Route path="/all-products" element={<ProtectedRoute><AllProducts /></ProtectedRoute>} />
+              <Route path="/product/:productId" element={<ProtectedRoute><ProductDetail /></ProtectedRoute>} />
               <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
               <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

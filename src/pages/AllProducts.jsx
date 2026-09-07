@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LS } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { Plus, Minus, Edit3, Save, X, Upload, ShoppingCart, ArrowLeft, ArrowRight, Heart, ChevronDown, Trash2, Images, Link2, SearchX } from 'lucide-react';
+import { Plus, Minus, Edit3, Save, X, Upload, ShoppingCart, ArrowLeft, ArrowRight, Heart, ChevronDown, Trash2, Images, SearchX } from 'lucide-react';
 import Hero from '../components/Hero';
 import { useWishlist } from '../context/WishlistContext';
 import SelectVariantModal from '../components/SelectVariantModal';
@@ -14,6 +14,7 @@ const AllProducts = () => {
     const { user } = useAuth();
     const { cart, addToCart, updateQty } = useCart();
     const { isWishlisted, toggleWishlist } = useWishlist();
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const searchQuery = searchParams.get('q') || '';
     const [products, setProducts] = useState([]);
@@ -28,29 +29,7 @@ const AllProducts = () => {
     // Per-product qty input state (before adding to cart)
     const [qtyInputs, setQtyInputs] = useState({});
 
-    // Products mentioned by name in another product's description
-    const [highlightedProductId, setHighlightedProductId] = useState(null);
-
-    const getReferencedProducts = (product) => {
-        if (!product.description) return [];
-        const desc = product.description.toLowerCase();
-        return products.filter(other => (
-            other.product_id !== product.product_id &&
-            other.name &&
-            other.name.trim().length > 2 &&
-            desc.includes(other.name.trim().toLowerCase())
-        )).slice(0, 4);
-    };
-
-    const handleReferenceClick = (refProduct) => {
-        setActiveCategory(refProduct.category);
-        setVisibleCategoryCount(1);
-        setHighlightedProductId(refProduct.product_id);
-        setTimeout(() => {
-            document.getElementById(`product-${refProduct.product_id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-        setTimeout(() => setHighlightedProductId(null), 2500);
-    };
+    const openProductDetail = (product) => navigate(`/product/${product.product_id}`);
 
     const getQty = (pid) => Math.max(1, Number(qtyInputs[pid]) || 1);
 
@@ -324,20 +303,21 @@ const AllProducts = () => {
         // Check if any variant of this product is in the cart
         const variantsInCartCount = cart?.filter(i => i.product_id === product.product_id).reduce((sum, i) => sum + i.qty, 0) || 0;
 
-        const referencedProducts = getReferencedProducts(product);
-
         return (
         <div
             key={product.product_id}
             id={`product-${product.product_id}`}
-            className={`glass-card group overflow-hidden flex flex-col p-3 border-none transition-all duration-500 hover:-translate-y-1 ${highlightedProductId === product.product_id ? 'ring-4 ring-indigo-400 ring-offset-2' : ''}`}
+            className="glass-card group overflow-hidden flex flex-col p-3 border-none transition-all duration-500 hover:-translate-y-1"
         >
-            <div className="relative h-44 bg-slate-50 overflow-hidden rounded-2xl mb-3">
+            <div
+                className="relative h-44 bg-slate-50 overflow-hidden rounded-2xl mb-3 cursor-pointer"
+                onClick={() => openProductDetail(product)}
+            >
                 <ProductImageSlider
                     images={product.images && product.images.length > 0 ? product.images : [product.image]}
                     name={product.name}
                 />
-                
+
                 {/* Discount Badge */}
                 {discount && (
                     <span className="absolute top-2 right-2 z-20 bg-slate-900/90 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md pointer-events-none">
@@ -346,7 +326,7 @@ const AllProducts = () => {
                 )}
 
                 <button
-                    onClick={() => toggleWishlist(product)}
+                    onClick={(e) => { e.stopPropagation(); toggleWishlist(product); }}
                     className={`absolute top-2 left-2 z-20 p-2 rounded-xl backdrop-blur-xl shadow-sm transition-all ${isWishlisted(product.product_id) ? 'bg-indigo-600 text-white' : 'bg-white/90 text-slate-400 hover:text-indigo-600'}`}
                     aria-label="Toggle wishlist"
                 >
@@ -354,7 +334,7 @@ const AllProducts = () => {
                 </button>
                 {user?.role === 'admin' && (
                     <button
-                        onClick={() => handleOpenModal(product)}
+                        onClick={(e) => { e.stopPropagation(); handleOpenModal(product); }}
                         className="absolute bottom-2 right-2 z-20 p-2.5 bg-white/90 backdrop-blur-xl rounded-xl text-slate-400 hover:text-indigo-600 shadow-xl opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
                     >
                         <Edit3 size={14} />
@@ -362,7 +342,11 @@ const AllProducts = () => {
                 )}
             </div>
             <div className="flex-1 flex flex-col">
-                <h3 className="font-black text-slate-900 mb-1 line-clamp-1 text-sm tracking-tight" title={product.name}>
+                <h3
+                    className="font-black text-slate-900 mb-1 line-clamp-1 text-sm tracking-tight cursor-pointer hover:text-indigo-600 transition-colors"
+                    title={product.name}
+                    onClick={() => openProductDetail(product)}
+                >
                     {product.name}
                 </h3>
                 {product.description && (
@@ -380,23 +364,6 @@ const AllProducts = () => {
                             Rs. {product.price}
                         </span>
                     </div>
-
-                    {referencedProducts.length > 0 && (
-                        <div className="flex flex-col gap-1">
-                            {referencedProducts.map(ref => (
-                                <button
-                                    key={ref.product_id}
-                                    type="button"
-                                    onClick={() => handleReferenceClick(ref)}
-                                    title={ref.name}
-                                    className="flex items-center gap-1 text-[10px] font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest transition-all"
-                                >
-                                    <Link2 size={11} />
-                                    View Reference: <span className="truncate normal-case font-bold">{ref.name}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
 
                     {hasVariants ? (
                         <button

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LS } from '../utils/LSHelpers';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -11,6 +12,7 @@ const NewProducts = () => {
     const { user } = useAuth();
     const { cart, addToCart, updateQty } = useCart();
     const { isWishlisted, toggleWishlist } = useWishlist();
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [imageUrlInput, setImageUrlInput] = useState('');
@@ -18,6 +20,8 @@ const NewProducts = () => {
     // Variant selector modal for customer
     const [selectedProductForVariant, setSelectedProductForVariant] = useState(null);
     const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
+
+    const openProductDetail = (product) => navigate(`/product/${product.product_id}`);
 
     // Per-product qty input state (before adding to cart)
     const [qtyInputs, setQtyInputs] = useState({});
@@ -193,13 +197,16 @@ const NewProducts = () => {
 
                         return (
                         <div key={p.product_id} className="glass-card group overflow-hidden flex flex-col p-4 border-none transition-all duration-500">
-                            <div className="h-44 bg-slate-50 relative overflow-hidden rounded-2xl mb-4">
+                            <div
+                                className="h-44 bg-slate-50 relative overflow-hidden rounded-2xl mb-4 cursor-pointer"
+                                onClick={() => openProductDetail(p)}
+                            >
                                 <ProductImageSlider
                                     images={p.images && p.images.length > 0 ? p.images : [p.image]}
                                     name={p.name}
                                 />
                                 <span className="absolute top-3 left-3 z-20 bg-indigo-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg shadow-xl tracking-widest uppercase pointer-events-none">New Launch</span>
-                                
+
                                 {discount && (
                                     <span className="absolute top-12 left-3 z-20 bg-slate-900/90 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-md pointer-events-none">
                                         -{discount}%
@@ -207,7 +214,7 @@ const NewProducts = () => {
                                 )}
 
                                 <button
-                                    onClick={() => toggleWishlist(p)}
+                                    onClick={(e) => { e.stopPropagation(); toggleWishlist(p); }}
                                     className={`absolute top-3 right-3 z-20 p-2 rounded-xl backdrop-blur-xl shadow-sm transition-all ${isWishlisted(p.product_id) ? 'bg-indigo-600 text-white' : 'bg-white/90 text-slate-400 hover:text-indigo-600'}`}
                                     aria-label="Toggle wishlist"
                                 >
@@ -216,7 +223,13 @@ const NewProducts = () => {
                             </div>
                             <div className="flex-1 flex flex-col">
                                 <div className="flex justify-between items-start mb-1">
-                                    <h3 className="font-black text-slate-900 truncate flex-1 text-sm tracking-tight" title={p.name}>{p.name}</h3>
+                                    <h3
+                                        className="font-black text-slate-900 truncate flex-1 text-sm tracking-tight cursor-pointer hover:text-indigo-600 transition-colors"
+                                        title={p.name}
+                                        onClick={() => openProductDetail(p)}
+                                    >
+                                        {p.name}
+                                    </h3>
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 px-1.5 py-0.5 bg-slate-100 rounded-md leading-none">{p.category}</span>
                                 </div>
                                 {p.description && (
